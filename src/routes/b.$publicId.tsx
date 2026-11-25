@@ -11,6 +11,7 @@ import { Link, createFileRoute } from "@tanstack/react-router"
 import { useEffect, useMemo, useState } from "react"
 
 import {
+  BillBossAvatar,
   CurrencyInput,
   HpBar,
   PageLoading,
@@ -199,21 +200,26 @@ function BillDetailRoute() {
 
       {/* 40px Boss Armor HP Bar */}
       <section className="rounded border-2 border-[var(--rt-border)] bg-[var(--rt-surface)] p-5">
-        <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="rt2-display text-2xl font-extrabold">Boss armor</h2>
-          <span className="tnum font-arcade-mono text-[18px] font-bold text-[var(--rt-accent-ink)]">
-            Remaining {formatRupiah(remaining)}
-          </span>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+          <BillBossAvatar bill={bill} size="lg" />
+          <div className="min-w-0 flex-1">
+            <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
+              <h2 className="rt2-display text-2xl font-extrabold">Boss armor</h2>
+              <span className="tnum font-arcade-mono text-[18px] font-bold text-[var(--rt-accent-ink)]">
+                Remaining {formatRupiah(remaining)}
+              </span>
+            </div>
+            <HpBar
+              bill={bill}
+              players={players}
+              youId={you?.id ?? ""}
+              preview={preview}
+              hit={hit}
+              tall
+              showLegend
+            />
+          </div>
         </div>
-        <HpBar
-          bill={bill}
-          players={players}
-          youId={you?.id ?? ""}
-          preview={preview}
-          hit={hit}
-          tall
-          showLegend
-        />
       </section>
 
       <section className="grid gap-6 lg:grid-cols-12">

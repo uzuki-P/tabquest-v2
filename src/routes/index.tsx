@@ -8,7 +8,9 @@ import {
 import { Link, createFileRoute } from "@tanstack/react-router"
 
 import {
+  BillBossAvatar,
   HpBar,
+  HpBarLegend,
   PageLoading,
   PayAllCard,
   PlayerAvatar,
@@ -266,77 +268,89 @@ function HomePage() {
               </div>
             </div>
           ) : (
-            unpaidBills.map((bill, idx) => {
-              const isMine =
-                you !== null &&
-                bill.splits.some(
-                  (s) => s.playerId === you.id && s.status === "unpaid"
-                )
-              const remaining = getBillRemainingAmount(bill)
+            <>
+              <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+                <span className="font-arcade-mono text-[13px] font-bold uppercase tracking-wider text-[var(--rt-muted)]">
+                  HP legend
+                </span>
+                <HpBarLegend />
+              </div>
+              {unpaidBills.map((bill) => {
+                const isMine =
+                  you !== null &&
+                  bill.splits.some(
+                    (s) => s.playerId === you.id && s.status === "unpaid"
+                  )
+                const remaining = getBillRemainingAmount(bill)
 
-              return (
-                <article
-                  key={bill.id}
-                  className={`rounded border-2 bg-[var(--rt-surface)] p-5 ${
-                    isMine
-                      ? "border-[var(--rt-border)] pl-6 shadow-[inset_4px_0_0_0_var(--rt-accent)]"
-                      : "border-[var(--rt-ui-border)]"
-                  }`}
-                >
-                  {/* Clean pointer behavior: ONLY header link + HP chunks are clickable */}
-                  <Link
-                    to="/b/$publicId"
-                    params={{ publicId: bill.publicId }}
-                    className="rt2-focus rt2-bill-header flex min-h-[44px] w-full flex-wrap items-baseline justify-between gap-2 text-left"
+                return (
+                  <article
+                    key={bill.id}
+                    className={`rounded border-2 bg-[var(--rt-surface)] p-5 ${
+                      isMine
+                        ? "border-[var(--rt-border)] pl-6 shadow-[inset_4px_0_0_0_var(--rt-accent)]"
+                        : "border-[var(--rt-ui-border)]"
+                    }`}
                   >
-                    <div className="flex flex-wrap items-baseline gap-2.5">
-                      <span className="rt2-bill-title rt2-display text-3xl font-extrabold transition-colors">
-                        {bill.merchant}
-                      </span>
-                      <span className="font-arcade-mono text-[14px] text-[var(--rt-muted)]">
-                        {fmtDate(bill.orderDate)}
-                      </span>
-                      <span className="tnum font-arcade-mono text-[14px] font-bold text-[var(--rt-teal-ink)]">
-                        {bill.paidCount} of {bill.totalPlayers} paid
-                      </span>
+                    <div className="flex items-center gap-4">
+                      <BillBossAvatar bill={bill} size="sm" />
+                      <div className="min-w-0 flex-1">
+                        {/* Clean pointer behavior: ONLY header link + HP chunks are clickable */}
+                        <Link
+                          to="/b/$publicId"
+                          params={{ publicId: bill.publicId }}
+                          className="rt2-focus rt2-bill-header flex min-h-[44px] w-full flex-wrap items-baseline justify-between gap-2 text-left"
+                        >
+                          <div className="flex flex-wrap items-baseline gap-2.5">
+                            <span className="rt2-bill-title rt2-display text-3xl font-extrabold transition-colors">
+                              {bill.merchant}
+                            </span>
+                            <span className="font-arcade-mono text-[14px] text-[var(--rt-muted)]">
+                              {fmtDate(bill.orderDate)}
+                            </span>
+                            <span className="tnum font-arcade-mono text-[14px] font-bold text-[var(--rt-teal-ink)]">
+                              {bill.paidCount} of {bill.totalPlayers} paid
+                            </span>
+                          </div>
+                          <span className="rt2-bill-action inline-flex items-center gap-1 text-[14px] font-bold text-[var(--rt-accent-ink)]">
+                            Bill detail
+                            <CaretRight
+                              size={14}
+                              weight="bold"
+                              className="rt2-bill-arrow transition-transform"
+                            />
+                          </span>
+                        </Link>
+
+                        <div className="mt-3">
+                          <HpBar
+                            bill={bill}
+                            players={players}
+                            youId={you?.id ?? ""}
+                            preview={preview && isMine}
+                            hit={hit}
+                          />
+                        </div>
+
+                        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[14px]">
+                          <span className="tnum font-arcade-mono text-[var(--rt-muted)]">
+                            <strong className="text-[16px] text-[var(--rt-ink)]">
+                              {formatRupiah(remaining)}
+                            </strong>{" "}
+                            remaining of {formatRupiah(bill.finalTotal)}
+                          </span>
+                          {isMine && (
+                            <span className="font-bold text-[var(--rt-accent-ink)]">
+                              Your bill
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <span className="rt2-bill-action inline-flex items-center gap-1 text-[14px] font-bold text-[var(--rt-accent-ink)]">
-                      Bill detail
-                      <CaretRight
-                        size={14}
-                        weight="bold"
-                        className="rt2-bill-arrow transition-transform"
-                      />
-                    </span>
-                  </Link>
-
-                  <div className="mt-3">
-                    <HpBar
-                      bill={bill}
-                      players={players}
-                      youId={you?.id ?? ""}
-                      preview={preview && isMine}
-                      hit={hit}
-                      showLegend={idx === 0}
-                    />
-                  </div>
-
-                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[14px]">
-                    <span className="tnum font-arcade-mono text-[var(--rt-muted)]">
-                      <strong className="text-[16px] text-[var(--rt-ink)]">
-                        {formatRupiah(remaining)}
-                      </strong>{" "}
-                      remaining of {formatRupiah(bill.finalTotal)}
-                    </span>
-                    {isMine && (
-                      <span className="font-bold text-[var(--rt-accent-ink)]">
-                        Your bill
-                      </span>
-                    )}
-                  </div>
-                </article>
-              )
-            })
+                  </article>
+                )
+              })}
+            </>
           )}
         </div>
       </section>

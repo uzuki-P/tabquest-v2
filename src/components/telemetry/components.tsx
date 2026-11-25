@@ -38,6 +38,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import { getBillBossAsset } from "@/domain/boss"
 import {
   Select,
   SelectContent,
@@ -384,6 +385,77 @@ export function CurrencyInput({
 }
 
 /* ================================================================
+   Bill Boss Avatar (4 HP-stage variants, 25% each)
+   ================================================================ */
+export function BillBossAvatar({
+  bill,
+  size = "md",
+  className = "",
+}: {
+  bill: BillSummary
+  size?: "sm" | "md" | "lg"
+  className?: string
+}) {
+  const remaining = getBillRemainingAmount(bill)
+  const total = bill.splits.reduce((s, x) => s + x.totalOwed, 0) || bill.finalTotal
+  const boss = getBillBossAsset(remaining, total)
+  const sizeClass =
+    size === "sm"
+      ? "h-24 w-24 sm:h-28 sm:w-28"
+      : size === "lg"
+        ? "h-32 w-32 sm:h-36 sm:w-36"
+        : "h-28 w-28 sm:h-32 sm:w-32"
+
+  return (
+    <div
+      className={`relative flex shrink-0 items-center justify-center ${sizeClass} ${className}`}
+      title={`${boss.label} (${boss.healthPct}% HP)`}
+    >
+      <img
+        src={boss.src}
+        alt={`${bill.merchant} boss - ${boss.label} (${boss.healthPct}% HP)`}
+        className="h-full w-full object-contain drop-shadow-sm"
+        loading="lazy"
+      />
+    </div>
+  )
+}
+
+export function HpBarLegend({ className = "" }: { className?: string }) {
+  return (
+    <div
+      className={`flex flex-wrap items-center gap-4 text-[14px] text-[var(--rt-muted)] ${className}`}
+    >
+      <span className="inline-flex items-center gap-1.5">
+        <span className="inline-flex h-4 w-4 items-center justify-center rounded-sm bg-[var(--rt-chunk-paid)] text-white">
+          <Check size={11} weight="bold" />
+        </span>
+        Paid
+      </span>
+      <span className="inline-flex items-center gap-1.5">
+        <span
+          className="rt2-pending-hatch inline-flex h-4 w-4 items-center justify-center rounded-sm bg-[var(--rt-chunk-pending)]"
+          style={{ color: "var(--rt-chunk-pending-fg)" }}
+        >
+          <Clock size={11} weight="bold" />
+        </span>
+        Pending
+      </span>
+      <span className="inline-flex items-center gap-1.5">
+        <span className="inline-flex h-4 w-4 items-center justify-center rounded-sm bg-[var(--rt-chunk-unpaid)] text-white">
+          <Warning size={11} weight="bold" />
+        </span>
+        Your unpaid
+      </span>
+      <span className="inline-flex items-center gap-1.5">
+        <span className="inline-block h-4 w-4 rounded-sm bg-[var(--rt-chunk-other)]" />
+        Other unpaid
+      </span>
+    </div>
+  )
+}
+
+/* ================================================================
    Boss Armor HP Bar with Chunk Hover/Focus Tooltips
    ================================================================ */
 export function HpBar({
@@ -406,6 +478,16 @@ export function HpBar({
   const navigate = useNavigate()
   const remaining = getBillRemainingAmount(bill)
   const total = bill.splits.reduce((s, x) => s + x.totalOwed, 0) || 1
+  const orderedSplits = [...bill.splits].sort((a, b) => {
+    const rank = (s: (typeof bill.splits)[number]) => {
+      if (s.status === "paid") return 0
+      const player = players.find((p) => p.id === s.playerId)
+      if (player?.pendingClaim) return 1
+      if (s.playerId === youId) return 2
+      return 3
+    }
+    return rank(a) - rank(b)
+  })
   const [hoveredId, setHoveredId] = useState<string | null>(null)
   const [pinnedId, setPinnedId] = useState<string | null>(null)
   const [dismissedKeys, setDismissedKeys] = useState<Set<string>>(() => new Set())
@@ -467,7 +549,7 @@ export function HpBar({
           tall ? "h-11" : "h-8"
         }`}
       >
-        {bill.splits.map((s) => {
+        {orderedSplits.map((s) => {
           const player = players.find((p) => p.id === s.playerId)
           const chunkState =
             s.status === "paid"
@@ -594,9 +676,9 @@ export function HpBar({
 
       {/* Sibling FX & Tooltip Layer (fix 6: unclipped, bound to track height) */}
       <div className="pointer-events-none absolute inset-0 overflow-visible">
-        {bill.splits.map((s, idx) => {
+        {orderedSplits.map((s, idx) => {
           const leftPct =
-            (bill.splits.slice(0, idx).reduce((sum, x) => sum + x.totalOwed, 0) /
+            (orderedSplits.slice(0, idx).reduce((sum, x) => sum + x.totalOwed, 0) /
               total) *
             100
           const widthPct = (s.totalOwed / total) * 100
@@ -741,35 +823,7 @@ export function HpBar({
       </div>
       </div>
 
-      {showLegend && (
-        <div className="mt-2.5 flex flex-wrap items-center gap-4 text-[14px] text-[var(--rt-muted)]">
-          <span className="inline-flex items-center gap-1.5">
-            <span className="inline-flex h-4 w-4 items-center justify-center rounded-sm bg-[var(--rt-chunk-paid)] text-white">
-              <Check size={11} weight="bold" />
-            </span>
-            Paid
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <span
-              className="rt2-pending-hatch inline-flex h-4 w-4 items-center justify-center rounded-sm bg-[var(--rt-chunk-pending)]"
-              style={{ color: "var(--rt-chunk-pending-fg)" }}
-            >
-              <Clock size={11} weight="bold" />
-            </span>
-            Pending
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <span className="inline-flex h-4 w-4 items-center justify-center rounded-sm bg-[var(--rt-chunk-unpaid)] text-white">
-              <Warning size={11} weight="bold" />
-            </span>
-            Your unpaid
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <span className="inline-block h-4 w-4 rounded-sm bg-[var(--rt-chunk-other)]" />
-            Other unpaid
-          </span>
-        </div>
-      )}
+      {showLegend && <HpBarLegend className="mt-2.5" />}
     </div>
   )
 }
