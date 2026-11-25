@@ -136,6 +136,7 @@ function AppShell() {
         themePref={themePref}
         onThemePrefChange={setThemePref}
         role={role}
+        unpaidCount={openDebtors.length}
         pendingCount={pendingCount}
         onOpenAdmin={() => setDrawerOpen(true)}
         onSignIn={() => void handleSignIn()}

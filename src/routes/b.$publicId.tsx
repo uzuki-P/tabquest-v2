@@ -2,6 +2,7 @@ import {
   Check,
   Clock,
   Heart,
+  Plus,
   Receipt,
   Warning,
   X,
@@ -9,7 +10,20 @@ import {
 import { Link, createFileRoute } from "@tanstack/react-router"
 import { useEffect, useMemo, useState } from "react"
 
-import { HpBar, PlayerAvatar, fmtDate } from "@/components/telemetry/components"
+import {
+  CurrencyInput,
+  HpBar,
+  PlayerAvatar,
+  fmtDate,
+} from "@/components/telemetry/components"
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { formatRupiah } from "@/domain/money"
 import {
   getBillRemainingAmount,
@@ -55,6 +69,13 @@ function BillDetailRoute() {
     toggleBillPlayerPayment,
   } = useAppStore()
   const [receiptOpen, setReceiptOpen] = useState(false)
+  const [customPayTarget, setCustomPayTarget] = useState<{
+    billPlayerId: string
+    playerName: string
+    totalOwed: number
+  } | null>(null)
+  const [customPayAmount, setCustomPayAmount] = useState(0)
+  const [customPayBusy, setCustomPayBusy] = useState(false)
   const [detail, setDetail] = useState<PublicBillDetailPayload | null>(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
@@ -375,7 +396,7 @@ function BillDetailRoute() {
                   </p>
                 )}
                 {role === "admin" && (
-                  <div className="mt-2.5 border-t border-[var(--rt-border-soft)] pt-2.5">
+                  <div className="mt-2.5 flex flex-wrap items-center gap-2 border-t border-[var(--rt-border-soft)] pt-2.5">
                     <button
                       type="button"
                       onClick={async () => {
@@ -391,6 +412,20 @@ function BillDetailRoute() {
                       className="rt2-focus rt2-btn-secondary inline-flex min-h-[34px] items-center gap-1.5 rounded px-2.5 text-[12px] font-bold"
                     >
                       {s.status === "paid" ? "Mark unpaid" : "Mark paid"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCustomPayTarget({
+                          billPlayerId: s.billPlayerId,
+                          playerName: s.name,
+                          totalOwed: s.totalOwed,
+                        })
+                        setCustomPayAmount(s.paidAmount ?? s.totalOwed)
+                      }}
+                      className="rt2-focus rt2-btn-secondary inline-flex min-h-[34px] items-center gap-1.5 rounded px-2.5 text-[12px] font-bold"
+                    >
+                      Custom amount
                     </button>
                   </div>
                 )}
@@ -491,6 +526,126 @@ function BillDetailRoute() {
           </div>
         </div>
       )}
+
+      <Dialog
+        open={customPayTarget !== null}
+        onOpenChange={(next) => {
+          if (!next && !customPayBusy) setCustomPayTarget(null)
+        }}
+      >
+        <DialogContent>
+          {customPayTarget && (() => {
+            const diff = customPayAmount - customPayTarget.totalOwed
+            const isShort = diff < 0
+            const submitCustomPay = async () => {
+              if (customPayAmount <= 0 || customPayBusy) return
+              setCustomPayBusy(true)
+              try {
+                const ok = await toggleBillPlayerPayment(
+                  customPayTarget.billPlayerId,
+                  "paid",
+                  customPayAmount
+                )
+                if (ok) {
+                  await loadBill()
+                  setCustomPayTarget(null)
+                }
+              } finally {
+                setCustomPayBusy(false)
+              }
+            }
+            return (
+              <>
+                <DialogHeader>
+                  <DialogTitle>{customPayTarget.playerName}</DialogTitle>
+                  <DialogDescription className="tnum font-arcade-mono">
+                    Owes {formatRupiah(customPayTarget.totalOwed)}
+                  </DialogDescription>
+                </DialogHeader>
+
+                <div className="space-y-3">
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      aria-pressed={customPayAmount === customPayTarget.totalOwed}
+                      onClick={() => setCustomPayAmount(customPayTarget.totalOwed)}
+                      className={`rt2-focus min-h-[40px] cursor-pointer rounded border-2 px-3 text-[13px] font-bold ${
+                        customPayAmount === customPayTarget.totalOwed
+                          ? "border-[var(--rt-ink)] bg-[var(--rt-ink)] text-[var(--rt-surface)]"
+                          : "rt2-btn-secondary"
+                      }`}
+                    >
+                      Exact {formatRupiah(customPayTarget.totalOwed)}
+                    </button>
+                  </div>
+
+                  <CurrencyInput
+                    label="Received amount"
+                    value={customPayAmount}
+                    onChange={setCustomPayAmount}
+                    onEnter={() => void submitCustomPay()}
+                  />
+
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--rt-border-soft)] pt-3">
+                    <span className="tnum inline-flex items-center gap-1.5 font-arcade-mono text-[14px] font-bold">
+                      {diff > 0 && (
+                        <>
+                          <Plus
+                            size={14}
+                            weight="bold"
+                            className="text-[var(--rt-teal-ink)]"
+                          />
+                          <span className="text-[var(--rt-teal-ink)]">
+                            {formatRupiah(diff)} tip
+                          </span>
+                        </>
+                      )}
+                      {diff === 0 && (
+                        <span className="text-[var(--rt-muted)]">Exact</span>
+                      )}
+                      {isShort && (
+                        <>
+                          <Warning
+                            size={15}
+                            weight="bold"
+                            className="text-[var(--rt-accent-ink)]"
+                          />
+                          <span className="text-[var(--rt-accent-ink)]">
+                            Short {formatRupiah(Math.abs(diff))}
+                          </span>
+                        </>
+                      )}
+                    </span>
+
+                    <div className="flex items-center gap-2">
+                      <DialogClose
+                        disabled={customPayBusy}
+                        className="rt2-focus rt2-btn-secondary min-h-[42px] rounded px-3.5 text-[14px] font-bold disabled:opacity-50"
+                      >
+                        Cancel
+                      </DialogClose>
+                      <button
+                        type="button"
+                        disabled={customPayAmount <= 0 || customPayBusy}
+                        onClick={() => void submitCustomPay()}
+                        className={`rt2-focus min-h-[42px] rounded px-4 text-[14px] font-bold disabled:opacity-50 ${
+                          isShort ? "rt2-btn-secondary" : "rt2-btn-primary"
+                        }`}
+                      >
+                        {customPayBusy
+                          ? "Confirming..."
+                          : isShort
+                            ? "Confirm short payment"
+                            : "Confirm payment"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )
+          })()}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

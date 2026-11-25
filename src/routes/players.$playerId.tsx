@@ -109,7 +109,12 @@ function PlayerDetailRoute() {
     }
   }
 
+  const [showAllMerchants, setShowAllMerchants] = useState(false)
+  const [showAllOrders, setShowAllOrders] = useState(false)
+
   useEffect(() => {
+    setShowAllMerchants(false)
+    setShowAllOrders(false)
     setLoading(true)
     void loadDetail()
   }, [playerId, players])
@@ -677,9 +682,9 @@ function PlayerDetailRoute() {
                       Math.max(12, Math.round((avgMonthlyOut / maxMonthlyMenu) * 100))
                     )}%`,
                   }}
-                  className="pointer-events-none absolute inset-x-0 z-10 border-t border-dashed border-[var(--rt-muted)]/60"
+                  className="pointer-events-none absolute inset-x-0 z-20 border-t border-dashed border-[var(--rt-muted)]/60"
                 >
-                  <span className="tnum absolute -top-4 right-0 rounded bg-[var(--rt-surface)] px-1 font-arcade-mono text-[10px] font-bold text-[var(--rt-muted)]">
+                  <span className="tnum absolute -top-4.5 right-0 rounded border border-[var(--rt-border-soft)] bg-[var(--rt-surface)]/95 px-1.5 py-0.5 font-arcade-mono text-[10px] font-bold text-[var(--rt-muted)] shadow-xs">
                     Avg {fmtCompactRp(avgMonthlyOut)}
                   </span>
                 </div>
@@ -1013,50 +1018,70 @@ function PlayerDetailRoute() {
                   No merchant history yet.
                 </p>
               ) : (
-                <ul className="mt-3.5 space-y-3">
-                  {merchantSplit.map((m, idx) => {
-                    const sharePct =
-                      totalMerchantSpend > 0
-                        ? Math.round((m.spend / totalMerchantSpend) * 100)
-                        : 0
-                    const avgTicket = Math.round(m.spend / Math.max(m.orders, 1))
-                    const color =
-                      MERCHANT_COLORS[idx % MERCHANT_COLORS.length]
-                    return (
-                      <li key={m.merchant} className="space-y-1">
-                        <div className="flex items-baseline justify-between gap-2 text-[14px]">
-                          <span className="flex min-w-0 items-center gap-2 font-bold">
-                            <span
-                              className="h-2.5 w-2.5 shrink-0 rounded-xs"
-                              style={{ backgroundColor: color }}
-                            />
-                            <span className="truncate">{m.merchant}</span>
-                            <span className="tnum shrink-0 font-arcade-mono text-[11px] font-semibold text-[var(--rt-muted)]">
-                              {sharePct}%
+                <>
+                  <ul className="mt-3.5 space-y-3">
+                    {(showAllMerchants
+                      ? merchantSplit
+                      : merchantSplit.slice(0, 8)
+                    ).map((m, idx) => {
+                      const sharePct =
+                        totalMerchantSpend > 0
+                          ? Math.round((m.spend / totalMerchantSpend) * 100)
+                          : 0
+                      const avgTicket = Math.round(
+                        m.spend / Math.max(m.orders, 1)
+                      )
+                      const color =
+                        MERCHANT_COLORS[idx % MERCHANT_COLORS.length]
+                      return (
+                        <li key={m.merchant} className="space-y-1">
+                          <div className="flex items-baseline justify-between gap-2 text-[14px]">
+                            <span className="flex min-w-0 items-center gap-2 font-bold">
+                              <span
+                                className="h-2.5 w-2.5 shrink-0 rounded-xs"
+                                style={{ backgroundColor: color }}
+                              />
+                              <span className="truncate">{m.merchant}</span>
+                              <span className="tnum shrink-0 font-arcade-mono text-[11px] font-semibold text-[var(--rt-muted)]">
+                                {sharePct}%
+                              </span>
                             </span>
-                          </span>
-                          <span className="tnum shrink-0 font-arcade-mono text-[13px] font-bold">
-                            {formatRupiah(m.spend)}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="h-1.5 flex-1 overflow-hidden rounded-xs bg-[var(--rt-bg)]">
-                            <div
-                              className="h-full"
-                              style={{
-                                width: `${sharePct}%`,
-                                backgroundColor: color,
-                              }}
-                            />
+                            <span className="tnum shrink-0 font-arcade-mono text-[13px] font-bold">
+                              {formatRupiah(m.spend)}
+                            </span>
                           </div>
-                          <span className="tnum shrink-0 font-arcade-mono text-[11px] text-[var(--rt-muted)]">
-                            {m.orders}x · avg {fmtCompactRp(avgTicket)}
-                          </span>
-                        </div>
-                      </li>
-                    )
-                  })}
-                </ul>
+                          <div className="flex items-center gap-2">
+                            <div className="h-1.5 flex-1 overflow-hidden rounded-xs bg-[var(--rt-bg)]">
+                              <div
+                                className="h-full"
+                                style={{
+                                  width: `${sharePct}%`,
+                                  backgroundColor: color,
+                                }}
+                              />
+                            </div>
+                            <span className="tnum shrink-0 font-arcade-mono text-[11px] text-[var(--rt-muted)]">
+                              {m.orders}x · avg {fmtCompactRp(avgTicket)}
+                            </span>
+                          </div>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                  {merchantSplit.length > 8 && (
+                    <div className="mt-3 border-t border-[var(--rt-border-soft)] pt-3">
+                      <button
+                        type="button"
+                        onClick={() => setShowAllMerchants((v) => !v)}
+                        className="rt2-focus rt2-btn-secondary w-full min-h-[36px] rounded px-3 text-[13px] font-bold"
+                      >
+                        {showAllMerchants
+                          ? "Show less"
+                          : `Show more (${merchantSplit.length - 8} more)`}
+                      </button>
+                    </div>
+                  )}
+                </>
               )}
             </div>
 
@@ -1133,79 +1158,97 @@ function PlayerDetailRoute() {
                 order.
               </p>
             ) : (
-              <div className="mt-4 divide-y divide-[var(--rt-border-soft)]">
-                {orderHistory.map(({ bill, split }, idx) => {
-                  const firstUnpaidIdx = orderHistory.findIndex(
-                    (o) => o.split.status !== "paid"
-                  )
-                  const isFirstUnpaid = idx === firstUnpaidIdx
-                  const status =
-                    split.status === "paid"
-                      ? "paid"
-                      : player.pendingClaim
-                        ? "pending"
-                        : "unpaid"
-                  const tip =
-                    split.paidAmount !== null
-                      ? Math.max(0, split.paidAmount - split.totalOwed)
-                      : 0
-                  const itemsSummary = split.items
-                    .map((i) => `${i.qty}x ${i.name}`)
-                    .join(", ")
+              <>
+                <div className="mt-4 divide-y divide-[var(--rt-border-soft)]">
+                  {(showAllOrders
+                    ? orderHistory
+                    : orderHistory.slice(0, 8)
+                  ).map(({ bill, split }, idx) => {
+                    const firstUnpaidIdx = orderHistory.findIndex(
+                      (o) => o.split.status !== "paid"
+                    )
+                    const isFirstUnpaid = idx === firstUnpaidIdx
+                    const status =
+                      split.status === "paid"
+                        ? "paid"
+                        : player.pendingClaim
+                          ? "pending"
+                          : "unpaid"
+                    const tip =
+                      split.paidAmount !== null
+                        ? Math.max(0, split.paidAmount - split.totalOwed)
+                        : 0
+                    const itemsSummary = split.items
+                      .map((i) => `${i.qty}x ${i.name}`)
+                      .join(", ")
 
-                  return (
-                    <Link
-                      key={bill.id}
-                      id={isFirstUnpaid ? "first-unpaid-bill" : undefined}
-                      to="/b/$publicId"
-                      params={{ publicId: bill.publicId }}
-                      className="rt2-focus rt2-row-hover grid min-h-[64px] scroll-mt-24 grid-cols-1 gap-2 px-2 py-3 text-left sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-4"
-                    >
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-baseline gap-2.5">
-                          <span className="font-arcade-mono text-[14px] text-[var(--rt-muted)]">
-                            {fmtDate(bill.orderDate)}
-                          </span>
-                          <span className="rt2-row-title text-[16px] font-bold">
-                            {bill.merchant}
-                          </span>
+                    return (
+                      <Link
+                        key={bill.id}
+                        id={isFirstUnpaid ? "first-unpaid-bill" : undefined}
+                        to="/b/$publicId"
+                        params={{ publicId: bill.publicId }}
+                        className="rt2-focus rt2-row-hover grid min-h-[64px] scroll-mt-24 grid-cols-1 gap-2 px-2 py-3 text-left sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-4"
+                      >
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-baseline gap-2.5">
+                            <span className="font-arcade-mono text-[14px] text-[var(--rt-muted)]">
+                              {fmtDate(bill.orderDate)}
+                            </span>
+                            <span className="rt2-row-title text-[16px] font-bold">
+                              {bill.merchant}
+                            </span>
+                          </div>
+                          <p
+                            title={itemsSummary}
+                            className="truncate text-[14px] text-[var(--rt-muted)]"
+                          >
+                            {itemsSummary}
+                          </p>
                         </div>
-                        <p
-                          title={itemsSummary}
-                          className="truncate text-[14px] text-[var(--rt-muted)]"
-                        >
-                          {itemsSummary}
-                        </p>
-                      </div>
 
-                      <div className="flex flex-wrap items-center gap-3">
-                        <span className="tnum font-arcade-mono text-[17px] font-bold">
-                          {formatRupiah(split.totalOwed)}
-                        </span>
-                        <span
-                          className={`inline-flex items-center gap-1 rounded px-2 py-0.5 font-arcade-mono text-[14px] font-bold ${
-                            status === "paid"
-                              ? "bg-[var(--rt-teal-soft)] text-[var(--rt-teal-ink)]"
-                              : status === "pending"
-                                ? "bg-[var(--rt-amber-soft)] text-[var(--rt-amber-ink)]"
-                                : "bg-[var(--rt-accent-soft)] text-[var(--rt-accent-ink)]"
-                          }`}
-                        >
-                          {status === "paid" && <Check size={14} weight="bold" />}
-                          {status === "pending" && <Clock size={14} weight="bold" />}
-                          {status === "unpaid" && <Warning size={14} weight="bold" />}
-                          {status[0].toUpperCase() + status.slice(1)}
-                        </span>
-                        {tip > 0 && (
-                          <span className="tnum font-arcade-mono text-[14px] font-bold text-[var(--rt-teal-ink)]">
-                            +{formatRupiah(tip)} tip
+                        <div className="flex flex-wrap items-center gap-3">
+                          <span className="tnum font-arcade-mono text-[17px] font-bold">
+                            {formatRupiah(split.totalOwed)}
                           </span>
-                        )}
-                      </div>
-                    </Link>
-                  )
-                })}
-              </div>
+                          <span
+                            className={`inline-flex items-center gap-1 rounded px-2 py-0.5 font-arcade-mono text-[14px] font-bold ${
+                              status === "paid"
+                                ? "bg-[var(--rt-teal-soft)] text-[var(--rt-teal-ink)]"
+                                : status === "pending"
+                                  ? "bg-[var(--rt-amber-soft)] text-[var(--rt-amber-ink)]"
+                                  : "bg-[var(--rt-accent-soft)] text-[var(--rt-accent-ink)]"
+                            }`}
+                          >
+                            {status === "paid" && <Check size={14} weight="bold" />}
+                            {status === "pending" && <Clock size={14} weight="bold" />}
+                            {status === "unpaid" && <Warning size={14} weight="bold" />}
+                            {status[0].toUpperCase() + status.slice(1)}
+                          </span>
+                          {tip > 0 && (
+                            <span className="tnum font-arcade-mono text-[14px] font-bold text-[var(--rt-teal-ink)]">
+                              +{formatRupiah(tip)} tip
+                            </span>
+                          )}
+                        </div>
+                      </Link>
+                    )
+                  })}
+                </div>
+                {orderHistory.length > 8 && (
+                  <div className="mt-3 border-t border-[var(--rt-border-soft)] pt-3">
+                    <button
+                      type="button"
+                      onClick={() => setShowAllOrders((v) => !v)}
+                      className="rt2-focus rt2-btn-secondary w-full min-h-[38px] rounded px-3 text-[13px] font-bold"
+                    >
+                      {showAllOrders
+                        ? "Show less"
+                        : `Show more (${orderHistory.length - 8} more)`}
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </div>
 

@@ -1258,6 +1258,7 @@ export function AppHeader({
   themePref,
   onThemePrefChange,
   role,
+  unpaidCount,
   pendingCount,
   onOpenAdmin,
   onSignIn,
@@ -1266,6 +1267,7 @@ export function AppHeader({
   themePref: ThemePreference
   onThemePrefChange: (pref: ThemePreference) => void
   role: AppUserRole
+  unpaidCount: number
   pendingCount: number
   onOpenAdmin: () => void
   onSignIn: () => void
@@ -1415,7 +1417,7 @@ export function AppHeader({
               onClick={onOpenAdmin}
               className="rt2-focus rt2-btn-primary inline-flex min-h-[40px] items-center gap-1.5 rounded px-3.5 text-[14px] font-bold"
             >
-              Collect ({pendingCount})
+              Collect ({unpaidCount} unpaid · {pendingCount} pending)
             </button>
           )}
 

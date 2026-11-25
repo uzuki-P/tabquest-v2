@@ -731,6 +731,14 @@ export async function getPlayerDetail(
     .sort((a, b) => b.billCount - a.billCount)
 
   // Monthly #1 badges across all months
+  const resolveBadgeStickerSrc = (
+    kind: "spending" | "tips",
+    monthKey: string
+  ): string | null =>
+    monthKey >= "2026-08" && monthKey <= "2027-08"
+      ? `/stickers/player-badges/${kind}-${monthKey}.webp`
+      : null
+
   const monthlyBadges: PlayerMonthlyBadge[] = []
   for (const mk of availableMonths) {
     const mPlayers = buildPlayerSummaries(snapshot, allBills, "monthly", mk)
@@ -742,7 +750,7 @@ export async function getPlayerDetail(
         monthKey: mk,
         monthLabel: formatMonthShortYear(mk),
         amount: mSpend[0].monthlySpend,
-        stickerSrc: null,
+        stickerSrc: resolveBadgeStickerSrc("spending", mk),
       })
     }
     if (mTips[0]?.id === playerId && mTips[0].monthlyTips > 0) {
@@ -751,7 +759,7 @@ export async function getPlayerDetail(
         monthKey: mk,
         monthLabel: formatMonthShortYear(mk),
         amount: mTips[0].monthlyTips,
-        stickerSrc: null,
+        stickerSrc: resolveBadgeStickerSrc("tips", mk),
       })
     }
   }
