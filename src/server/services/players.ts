@@ -3,7 +3,7 @@ import { uuidv7 } from "uuidv7"
 import { z } from "zod"
 
 import type { Database } from "@/db"
-import { players, user } from "@/db/schema"
+import { account, players, session, user } from "@/db/schema"
 import type { AdminUserSummary } from "@/domain/types"
 import { makePlayerHandle, makePlayerInitials } from "@/domain/types"
 import { normalizeEmail } from "@/lib/auth-policy"
@@ -319,4 +319,53 @@ export async function updatePlayer(
     createdAt: existing.createdAt,
     updatedAt: now,
   }
+}
+
+/**
+ * Deletes a non-admin Better Auth user account (along with its sessions and
+ * OAuth accounts) and unlinks any player attached to it, atomically via db.batch.
+ */
+export async function deleteAdminUser(
+  db: Database,
+  userId: string,
+  actingAdminUserId: string
+): Promise<{ deletedUserId: string; email: string }> {
+  if (userId === actingAdminUserId) {
+    throw new ServiceError(
+      400,
+      "CANNOT_DELETE_SELF",
+      "You cannot remove your own admin account."
+    )
+  }
+
+  const [target] = await db
+    .select({ id: user.id, email: user.email, role: user.role })
+    .from(user)
+    .where(eq(user.id, userId))
+    .limit(1)
+
+  if (!target) {
+    throw new ServiceError(404, "USER_NOT_FOUND", "User account not found.")
+  }
+
+  if (target.role === "admin") {
+    throw new ServiceError(
+      400,
+      "CANNOT_DELETE_ADMIN",
+      "Cannot remove an admin account."
+    )
+  }
+
+  const now = nowUtcIso()
+  await db.batch([
+    db
+      .update(players)
+      .set({ userId: null, updatedAt: now })
+      .where(eq(players.userId, userId)),
+    db.delete(session).where(eq(session.userId, userId)),
+    db.delete(account).where(eq(account.userId, userId)),
+    db.delete(user).where(eq(user.id, userId)),
+  ])
+
+  return { deletedUserId: target.id, email: target.email }
 }

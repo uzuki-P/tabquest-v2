@@ -182,6 +182,7 @@ interface AppStoreValue {
   setPlayerAvatarBanned: (playerId: string, banned: boolean) => Promise<boolean>
   setPlayerNameLocked: (playerId: string, locked: boolean) => Promise<boolean>
   removePlayerAvatarAdmin: (playerId: string) => Promise<boolean>
+  deleteAdminUser: (userId: string) => Promise<boolean>
 
   // Self-service profile & avatar
   uploadMyAvatar: (blob: Blob) => Promise<string | null>
@@ -749,6 +750,27 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     [pushToast, refreshAdmin, refreshWorkspace]
   )
 
+  const deleteAdminUser = useCallback(
+    async (userId: string) => {
+      try {
+        const res = await apiFetch<{ deletedUserId: string; email: string }>(
+          `/api/admin/users/${encodeURIComponent(userId)}`,
+          { method: "DELETE" }
+        )
+        await Promise.all([refreshAdmin(), refreshWorkspace()])
+        pushToast(`Removed account ${res.email}.`)
+        return true
+      } catch (err) {
+        pushToast(
+          err instanceof Error ? err.message : "Failed to remove account.",
+          "error"
+        )
+        return false
+      }
+    },
+    [pushToast, refreshAdmin, refreshWorkspace]
+  )
+
   const setRoundingPlayerId = useCallback(
     async (playerId: string) => {
       const ok = await updatePlayer(playerId, { takesRounding: true })
@@ -1055,6 +1077,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         setPlayerAvatarBanned,
         setPlayerNameLocked,
         removePlayerAvatarAdmin,
+        deleteAdminUser,
         uploadMyAvatar,
         removeMyAvatar,
         updateMyUsername,

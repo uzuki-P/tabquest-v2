@@ -1,6 +1,7 @@
 import {
   ArrowDown,
   Camera,
+  CaretDown,
   Check,
   Clock,
   Crown,
@@ -9,6 +10,7 @@ import {
   LockSimpleOpen,
   PencilSimple,
   Prohibit,
+  ShieldCheck,
   Trash,
   Trophy,
   Users,
@@ -20,6 +22,11 @@ import { useEffect, useMemo, useState } from "react"
 
 import { AvatarUploadDialog } from "@/components/telemetry/AvatarUploadDialog"
 import { PlayerHoverCard } from "@/components/telemetry/PlayerHoverCard"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import {
   EarnedBadgePill,
   PageLoading,
@@ -87,6 +94,8 @@ function PlayerDetailRoute() {
   const [hoveredMonth, setHoveredMonth] = useState<string | null>(null)
   const [selectedWeekday, setSelectedWeekday] = useState<number | null>(null)
   const [avatarDialogOpen, setAvatarDialogOpen] = useState(false)
+  const [adminMenuOpen, setAdminMenuOpen] = useState(false)
+  const [adminActionBusy, setAdminActionBusy] = useState(false)
   const [editingUsername, setEditingUsername] = useState(false)
   const [draftUsername, setDraftUsername] = useState("")
   const [savingUsername, setSavingUsername] = useState(false)
@@ -345,17 +354,106 @@ function PlayerDetailRoute() {
                       {player.avatarUrl ? "Change avatar" : "Upload avatar"}
                     </button>
                   )}
-                  {canEditUsername && !editingUsername && (
+                  {canEditUsername && !editingUsername && isLinkedSelf && (
                     <button
                       type="button"
                       onClick={handleStartEditUsername}
                       className="rt2-focus rt2-btn-secondary inline-flex min-h-[32px] items-center gap-1.5 rounded px-2.5 text-[12px] font-bold"
                     >
                       <PencilSimple size={13} weight="bold" />
-                      {role === "admin" && !isLinkedSelf
-                        ? "Force name"
-                        : "Change name"}
+                      Change name
                     </button>
+                  )}
+                  {role === "admin" && (
+                    <Popover
+                      open={adminMenuOpen}
+                      onOpenChange={setAdminMenuOpen}
+                    >
+                      <PopoverTrigger
+                        disabled={adminActionBusy}
+                        className="rt2-focus rt2-btn-secondary inline-flex min-h-[32px] cursor-pointer items-center gap-1.5 rounded px-2.5 text-[12px] font-bold"
+                      >
+                        <ShieldCheck size={14} weight="bold" />
+                        {adminActionBusy ? "Updating..." : "Admin actions"}
+                        <CaretDown size={12} weight="bold" />
+                      </PopoverTrigger>
+                      <PopoverContent align="start" className="w-48 p-1.5">
+                        {canEditUsername && !editingUsername && !isLinkedSelf && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAdminMenuOpen(false)
+                              handleStartEditUsername()
+                            }}
+                            className="rt2-focus flex min-h-[38px] w-full cursor-pointer items-center gap-2 rounded px-2.5 text-left text-[13px] font-bold hover:bg-white/10"
+                          >
+                            <PencilSimple size={15} weight="bold" />
+                            Force name
+                          </button>
+                        )}
+                        {player.avatarUrl && (
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              setAdminMenuOpen(false)
+                              setAdminActionBusy(true)
+                              const ok = await removePlayerAvatarAdmin(
+                                player.id
+                              )
+                              if (ok) await loadDetail()
+                              setAdminActionBusy(false)
+                            }}
+                            className="rt2-focus flex min-h-[38px] w-full cursor-pointer items-center gap-2 rounded px-2.5 text-left text-[13px] font-bold text-[var(--rt-accent-ink)] hover:bg-white/10"
+                          >
+                            <Trash size={15} weight="bold" />
+                            Remove avatar
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            setAdminMenuOpen(false)
+                            setAdminActionBusy(true)
+                            const ok = await setPlayerAvatarBanned(
+                              player.id,
+                              !player.avatarBanned
+                            )
+                            if (ok) await loadDetail()
+                            setAdminActionBusy(false)
+                          }}
+                          className="rt2-focus flex min-h-[38px] w-full cursor-pointer items-center gap-2 rounded px-2.5 text-left text-[13px] font-bold hover:bg-white/10"
+                        >
+                          <Prohibit size={15} weight="bold" />
+                          {player.avatarBanned ? "Unban avatar" : "Ban avatar"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            setAdminMenuOpen(false)
+                            setAdminActionBusy(true)
+                            const ok = await setPlayerNameLocked(
+                              player.id,
+                              !player.nameLocked
+                            )
+                            if (ok) await loadDetail()
+                            setAdminActionBusy(false)
+                          }}
+                          className="rt2-focus flex min-h-[38px] w-full cursor-pointer items-center gap-2 rounded px-2.5 text-left text-[13px] font-bold hover:bg-white/10"
+                        >
+                          {player.nameLocked ? (
+                            <>
+                              <LockSimpleOpen size={15} weight="bold" />
+                              Unlock name
+                            </>
+                          ) : (
+                            <>
+                              <LockSimple size={15} weight="bold" />
+                              Lock name
+                            </>
+                          )}
+                        </button>
+                      </PopoverContent>
+                    </Popover>
                   )}
                   {player.avatarBanned && (
                     <span className="inline-flex items-center gap-1 rounded bg-[var(--rt-accent-soft)] px-2 py-0.5 font-arcade-mono text-[12px] font-bold text-[var(--rt-accent-ink)]">
@@ -368,60 +466,6 @@ function PlayerDetailRoute() {
                       <LockSimple size={13} weight="bold" />
                       Name locked by admin
                     </span>
-                  )}
-                  {role === "admin" && player.avatarUrl && (
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        const ok = await removePlayerAvatarAdmin(player.id)
-                        if (ok) await loadDetail()
-                      }}
-                      className="rt2-focus rt2-btn-danger inline-flex min-h-[32px] items-center gap-1 rounded px-2.5 text-[12px] font-bold"
-                    >
-                      <Trash size={13} weight="bold" />
-                      Remove avatar
-                    </button>
-                  )}
-                  {role === "admin" && (
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        const ok = await setPlayerAvatarBanned(
-                          player.id,
-                          !player.avatarBanned
-                        )
-                        if (ok) await loadDetail()
-                      }}
-                      className="rt2-focus rt2-btn-secondary inline-flex min-h-[32px] items-center gap-1 rounded px-2.5 text-[12px] font-bold"
-                    >
-                      <Prohibit size={13} weight="bold" />
-                      {player.avatarBanned ? "Unban avatar" : "Ban avatar"}
-                    </button>
-                  )}
-                  {role === "admin" && (
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        const ok = await setPlayerNameLocked(
-                          player.id,
-                          !player.nameLocked
-                        )
-                        if (ok) await loadDetail()
-                      }}
-                      className="rt2-focus rt2-btn-secondary inline-flex min-h-[32px] items-center gap-1 rounded px-2.5 text-[12px] font-bold"
-                    >
-                      {player.nameLocked ? (
-                        <>
-                          <LockSimpleOpen size={13} weight="bold" />
-                          Unlock name
-                        </>
-                      ) : (
-                        <>
-                          <LockSimple size={13} weight="bold" />
-                          Lock name
-                        </>
-                      )}
-                    </button>
                   )}
                 </div>
               </div>

@@ -39,6 +39,7 @@ import { Route as ApiAdminPlayersPlayerIdRouteImport } from './routes/api/admin/
 import { Route as ApiAdminTransferClaimsDismissRouteImport } from './routes/api/admin/transfer-claims/dismiss'
 import { Route as ApiAdminUploadsObjectKeyRouteImport } from './routes/api/admin/uploads/$objectKey'
 import { Route as ApiAdminUploadsReceiptRouteImport } from './routes/api/admin/uploads/receipt'
+import { Route as ApiAdminUsersUserIdRouteImport } from './routes/api/admin/users/$userId'
 import { Route as ApiPublicBillsPublicIdRouteImport } from './routes/api/public/bills/$publicId'
 import { Route as ApiPublicPlayersPlayerIdRouteImport } from './routes/api/public/players/$playerId'
 import { Route as ApiAdminOcrJobsIndexRouteImport } from './routes/api/admin/ocr/jobs/index'
@@ -199,6 +200,11 @@ const ApiAdminUploadsReceiptRoute = ApiAdminUploadsReceiptRouteImport.update({
   path: '/api/admin/uploads/receipt',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAdminUsersUserIdRoute = ApiAdminUsersUserIdRouteImport.update({
+  id: '/api/admin/users/$userId',
+  path: '/api/admin/users/$userId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicBillsPublicIdRoute = ApiPublicBillsPublicIdRouteImport.update({
   id: '/api/public/bills/$publicId',
   path: '/api/public/bills/$publicId',
@@ -262,6 +268,7 @@ export interface FileRoutesByFullPath {
   '/api/admin/transfer-claims/dismiss': typeof ApiAdminTransferClaimsDismissRoute
   '/api/admin/uploads/$objectKey': typeof ApiAdminUploadsObjectKeyRoute
   '/api/admin/uploads/receipt': typeof ApiAdminUploadsReceiptRoute
+  '/api/admin/users/$userId': typeof ApiAdminUsersUserIdRoute
   '/api/public/bills/$publicId': typeof ApiPublicBillsPublicIdRouteWithChildren
   '/api/public/players/$playerId': typeof ApiPublicPlayersPlayerIdRouteWithChildren
   '/api/admin/bills/': typeof ApiAdminBillsIndexRoute
@@ -299,6 +306,7 @@ export interface FileRoutesByTo {
   '/api/admin/transfer-claims/dismiss': typeof ApiAdminTransferClaimsDismissRoute
   '/api/admin/uploads/$objectKey': typeof ApiAdminUploadsObjectKeyRoute
   '/api/admin/uploads/receipt': typeof ApiAdminUploadsReceiptRoute
+  '/api/admin/users/$userId': typeof ApiAdminUsersUserIdRoute
   '/api/public/bills/$publicId': typeof ApiPublicBillsPublicIdRouteWithChildren
   '/api/public/players/$playerId': typeof ApiPublicPlayersPlayerIdRouteWithChildren
   '/api/admin/bills': typeof ApiAdminBillsIndexRoute
@@ -338,6 +346,7 @@ export interface FileRoutesById {
   '/api/admin/transfer-claims/dismiss': typeof ApiAdminTransferClaimsDismissRoute
   '/api/admin/uploads/$objectKey': typeof ApiAdminUploadsObjectKeyRoute
   '/api/admin/uploads/receipt': typeof ApiAdminUploadsReceiptRoute
+  '/api/admin/users/$userId': typeof ApiAdminUsersUserIdRoute
   '/api/public/bills/$publicId': typeof ApiPublicBillsPublicIdRouteWithChildren
   '/api/public/players/$playerId': typeof ApiPublicPlayersPlayerIdRouteWithChildren
   '/api/admin/bills/': typeof ApiAdminBillsIndexRoute
@@ -378,6 +387,7 @@ export interface FileRouteTypes {
     | '/api/admin/transfer-claims/dismiss'
     | '/api/admin/uploads/$objectKey'
     | '/api/admin/uploads/receipt'
+    | '/api/admin/users/$userId'
     | '/api/public/bills/$publicId'
     | '/api/public/players/$playerId'
     | '/api/admin/bills/'
@@ -415,6 +425,7 @@ export interface FileRouteTypes {
     | '/api/admin/transfer-claims/dismiss'
     | '/api/admin/uploads/$objectKey'
     | '/api/admin/uploads/receipt'
+    | '/api/admin/users/$userId'
     | '/api/public/bills/$publicId'
     | '/api/public/players/$playerId'
     | '/api/admin/bills'
@@ -453,6 +464,7 @@ export interface FileRouteTypes {
     | '/api/admin/transfer-claims/dismiss'
     | '/api/admin/uploads/$objectKey'
     | '/api/admin/uploads/receipt'
+    | '/api/admin/users/$userId'
     | '/api/public/bills/$publicId'
     | '/api/public/players/$playerId'
     | '/api/admin/bills/'
@@ -488,6 +500,7 @@ export interface RootRouteChildren {
   ApiAdminTransferClaimsDismissRoute: typeof ApiAdminTransferClaimsDismissRoute
   ApiAdminUploadsObjectKeyRoute: typeof ApiAdminUploadsObjectKeyRoute
   ApiAdminUploadsReceiptRoute: typeof ApiAdminUploadsReceiptRoute
+  ApiAdminUsersUserIdRoute: typeof ApiAdminUsersUserIdRoute
   ApiPublicBillsPublicIdRoute: typeof ApiPublicBillsPublicIdRouteWithChildren
   ApiPublicPlayersPlayerIdRoute: typeof ApiPublicPlayersPlayerIdRouteWithChildren
   ApiAdminBillsIndexRoute: typeof ApiAdminBillsIndexRoute
@@ -708,6 +721,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAdminUploadsReceiptRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/admin/users/$userId': {
+      id: '/api/admin/users/$userId'
+      path: '/api/admin/users/$userId'
+      fullPath: '/api/admin/users/$userId'
+      preLoaderRoute: typeof ApiAdminUsersUserIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/bills/$publicId': {
       id: '/api/public/bills/$publicId'
       path: '/api/public/bills/$publicId'
@@ -822,6 +842,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAdminTransferClaimsDismissRoute: ApiAdminTransferClaimsDismissRoute,
   ApiAdminUploadsObjectKeyRoute: ApiAdminUploadsObjectKeyRoute,
   ApiAdminUploadsReceiptRoute: ApiAdminUploadsReceiptRoute,
+  ApiAdminUsersUserIdRoute: ApiAdminUsersUserIdRoute,
   ApiPublicBillsPublicIdRoute: ApiPublicBillsPublicIdRouteWithChildren,
   ApiPublicPlayersPlayerIdRoute: ApiPublicPlayersPlayerIdRouteWithChildren,
   ApiAdminBillsIndexRoute: ApiAdminBillsIndexRoute,

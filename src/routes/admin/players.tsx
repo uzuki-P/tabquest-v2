@@ -79,6 +79,7 @@ function PlayerActionsMenu({
 
 function AdminPlayersPage() {
   const {
+    me,
     adminPlayers,
     adminUsers,
     roundingPlayerId,
@@ -89,11 +90,16 @@ function AdminPlayersPage() {
     removePlayerAvatarAdmin,
     setPlayerAvatarBanned,
     setPlayerNameLocked,
+    deleteAdminUser,
   } = useAppStore()
 
   const [showArchived, setShowArchived] = useState(false)
   const [newName, setNewName] = useState("")
   const [newEmail, setNewEmail] = useState("")
+  const [confirmDeleteUserId, setConfirmDeleteUserId] = useState<string | null>(
+    null
+  )
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null)
 
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editName, setEditName] = useState("")
@@ -407,6 +413,109 @@ function AdminPlayersPage() {
             )
           })
         )}
+      </section>
+
+      {/* Signed-in Accounts (cleanup wrong/unused Google emails) */}
+      <section className="rounded border-2 border-[var(--rt-border)] bg-[var(--rt-surface)]">
+        <div className="border-b border-[var(--rt-border-soft)] px-5 py-4">
+          <h2 className="rt2-display text-2xl font-extrabold">
+            Signed-in accounts ({adminUsers.length})
+          </h2>
+          <p className="mt-0.5 text-[14px] text-[var(--rt-muted)]">
+            Google accounts that have signed in. Remove wrong or unused emails to
+            unlink them and clear them from the Linked account list.
+          </p>
+        </div>
+
+        <div className="divide-y divide-[var(--rt-border-soft)]">
+          {adminUsers.length === 0 ? (
+            <p className="p-6 text-center text-[15px] text-[var(--rt-muted)]">
+              No signed-in accounts yet.
+            </p>
+          ) : (
+            adminUsers.map((u) => {
+              const linkedPlayer = adminPlayers.find((p) => p.userId === u.id)
+              const isAdminAccount =
+                u.role === "admin" || u.id === me.user?.id
+              const isConfirming = confirmDeleteUserId === u.id
+              const isDeleting = deletingUserId === u.id
+
+              return (
+                <div
+                  key={u.id}
+                  className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5"
+                >
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="truncate font-arcade-mono text-[14px] font-bold">
+                        {u.email}
+                      </span>
+                      {u.role === "admin" && (
+                        <span className="rounded bg-[var(--rt-accent-soft)] px-2 py-0.5 font-arcade-mono text-[11px] font-bold text-[var(--rt-accent-ink)]">
+                          Admin
+                        </span>
+                      )}
+                      {linkedPlayer ? (
+                        <span className="rounded bg-[var(--rt-teal-soft)] px-2 py-0.5 font-arcade-mono text-[11px] font-bold text-[var(--rt-teal-ink)]">
+                          Linked to {linkedPlayer.name}
+                        </span>
+                      ) : (
+                        <span className="rounded bg-[var(--rt-surface-alt)] px-2 py-0.5 font-arcade-mono text-[11px] font-bold text-[var(--rt-muted)]">
+                          Unlinked
+                        </span>
+                      )}
+                    </div>
+                    {u.name && (
+                      <p className="mt-0.5 truncate text-[13px] text-[var(--rt-muted)]">
+                        {u.name}
+                      </p>
+                    )}
+                  </div>
+
+                  {!isAdminAccount && (
+                    <div className="flex shrink-0 items-center gap-2">
+                      {isConfirming ? (
+                        <>
+                          <button
+                            type="button"
+                            disabled={isDeleting}
+                            onClick={async () => {
+                              setDeletingUserId(u.id)
+                              const ok = await deleteAdminUser(u.id)
+                              setDeletingUserId(null)
+                              if (ok) setConfirmDeleteUserId(null)
+                            }}
+                            className="rt2-focus rt2-btn-danger inline-flex min-h-[38px] items-center gap-1.5 rounded px-3 text-[13px] font-bold"
+                          >
+                            <Trash size={14} weight="bold" />
+                            {isDeleting ? "Removing..." : "Confirm remove"}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={isDeleting}
+                            onClick={() => setConfirmDeleteUserId(null)}
+                            className="rt2-focus rt2-btn-secondary inline-flex min-h-[38px] items-center rounded px-3 text-[13px] font-bold"
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setConfirmDeleteUserId(u.id)}
+                          className="rt2-focus rt2-btn-secondary inline-flex min-h-[38px] items-center gap-1.5 rounded px-3 text-[13px] font-bold text-[var(--rt-accent-ink)]"
+                        >
+                          <Trash size={14} weight="bold" />
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )
+            })
+          )}
+        </div>
       </section>
     </AdminShell>
   )
