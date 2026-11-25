@@ -810,8 +810,8 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
           players.find((p) => p.id === playerId)
         pushToast(
           locked
-            ? `Locked username for ${target?.name ?? "player"}.`
-            : `Unlocked username for ${target?.name ?? "player"}.`
+            ? `Locked name for ${target?.name ?? "player"}.`
+            : `Unlocked name for ${target?.name ?? "player"}.`
         )
       }
       return ok
@@ -845,7 +845,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         return true
       } catch (err) {
         pushToast(
-          err instanceof Error ? err.message : "Failed to update username."
+          err instanceof Error ? err.message : "Failed to update name."
         )
         return false
       }

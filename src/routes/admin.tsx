@@ -1,7 +1,6 @@
 import {
   Clock,
   GearSix,
-  Plus,
   Receipt,
   ShieldCheck,
   Users,
@@ -26,12 +25,6 @@ export const Route = createFileRoute("/admin")({
 const ADMIN_TABS = [
   { to: "/admin" as const, label: "Bills", icon: Receipt, exact: true },
   {
-    to: "/admin/bills/new" as const,
-    label: "New bill",
-    icon: Plus,
-    exact: false,
-  },
-  {
     to: "/admin/players" as const,
     label: "Players",
     icon: Users,
@@ -46,9 +39,8 @@ const ADMIN_TABS = [
 ]
 
 function getTabIndex(pathname: string): number {
-  if (pathname.startsWith("/admin/bills/new")) return 1
-  if (pathname.startsWith("/admin/players")) return 2
-  if (pathname.startsWith("/admin/settings")) return 3
+  if (pathname.startsWith("/admin/players")) return 1
+  if (pathname.startsWith("/admin/settings")) return 2
   return 0
 }
 

@@ -35,7 +35,7 @@ export const Route = createFileRoute("/api/me/profile")({
         } catch (error) {
           if (error instanceof z.ZodError) {
             return Response.json(
-              { error: error.issues[0]?.message ?? "Invalid username." },
+              { error: error.issues[0]?.message ?? "Invalid name." },
               { status: 400 }
             )
           }
@@ -66,7 +66,7 @@ export const Route = createFileRoute("/api/me/profile")({
 
         if (player.nameLocked) {
           return Response.json(
-            { error: "Your username is locked by an admin." },
+            { error: "Your name is locked by an admin." },
             { status: 403 }
           )
         }

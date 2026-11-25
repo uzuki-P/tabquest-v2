@@ -272,7 +272,7 @@ function PlayerDetailRoute() {
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="flex items-center gap-4">
               <div className="relative">
-                <PlayerAvatar player={player} size="lg" chamfer heroStyle />
+                <PlayerAvatar player={player} size="xl" chamfer heroStyle />
                 {canEditAvatar && (
                   <button
                     type="button"
@@ -296,7 +296,7 @@ function PlayerDetailRoute() {
                         type="text"
                         value={draftUsername}
                         maxLength={40}
-                        aria-label="Custom username"
+                        aria-label="Custom name"
                         autoFocus
                         onChange={(e) => setDraftUsername(e.target.value)}
                         className="rt2-focus h-10 w-52 rounded border-2 border-[var(--rt-accent)] bg-[var(--rt-surface-alt)] px-3 text-[16px] font-bold"
@@ -319,17 +319,12 @@ function PlayerDetailRoute() {
                       </button>
                     </form>
                   ) : (
-                    <>
-                      <h1
-                        style={{ viewTransitionName: "hero-player-name" }}
-                        className="rt2-display text-4xl font-extrabold"
-                      >
-                        {player.name}
-                      </h1>
-                      <span className="font-arcade-mono text-[15px] text-[var(--rt-muted)]">
-                        {player.handle}
-                      </span>
-                    </>
+                    <h1
+                      style={{ viewTransitionName: "hero-player-name" }}
+                      className="rt2-display text-4xl font-extrabold"
+                    >
+                      {player.name}
+                    </h1>
                   )}
                 </div>
                 <p className="tnum mt-1 font-arcade-mono text-[13px] text-[var(--rt-muted)]">
@@ -338,7 +333,7 @@ function PlayerDetailRoute() {
                   {player.savedPct}%)
                 </p>
 
-                {/* Avatar & username controls + moderation notices */}
+                {/* Avatar & name controls + moderation notices */}
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   {canEditAvatar && (
                     <button
@@ -358,8 +353,8 @@ function PlayerDetailRoute() {
                     >
                       <PencilSimple size={13} weight="bold" />
                       {role === "admin" && !isLinkedSelf
-                        ? "Force username"
-                        : "Change username"}
+                        ? "Force name"
+                        : "Change name"}
                     </button>
                   )}
                   {player.avatarBanned && (
@@ -371,7 +366,7 @@ function PlayerDetailRoute() {
                   {player.nameLocked && (
                     <span className="inline-flex items-center gap-1 rounded bg-[var(--rt-amber-soft)] px-2 py-0.5 font-arcade-mono text-[12px] font-bold text-[var(--rt-amber-ink)]">
                       <LockSimple size={13} weight="bold" />
-                      Username locked by admin
+                      Name locked by admin
                     </span>
                   )}
                   {role === "admin" && player.avatarUrl && (

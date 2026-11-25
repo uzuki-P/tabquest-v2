@@ -70,7 +70,7 @@ export function PlayerHoverCard({
               <div className="min-w-0">
                 <p className="truncate text-[15px] font-bold">{player.name}</p>
                 <p className="font-arcade-mono text-[12px] text-[var(--rt-muted)]">
-                  {player.handle} · {player.ordersCount} bills
+                  {player.ordersCount} bills
                 </p>
               </div>
             </div>

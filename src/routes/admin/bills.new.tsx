@@ -1263,9 +1263,6 @@ function AdminNewBillPage() {
                           <PlayerAvatar player={p} size="md" />
                           <div>
                             <p className="text-[16px] font-bold">{p.name}</p>
-                            <p className="font-arcade-mono text-[13px] text-[var(--rt-muted)]">
-                              {p.handle}
-                            </p>
                           </div>
                         </div>
                         <span

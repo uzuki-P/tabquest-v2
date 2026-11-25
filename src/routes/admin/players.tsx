@@ -93,7 +93,6 @@ function AdminPlayersPage() {
 
   const [showArchived, setShowArchived] = useState(false)
   const [newName, setNewName] = useState("")
-  const [newPhone, setNewPhone] = useState("")
   const [newEmail, setNewEmail] = useState("")
 
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -111,12 +110,10 @@ function AdminPlayersPage() {
     if (!newName.trim()) return
     const ok = await addPlayer({
       name: newName,
-      phone: newPhone.trim() || null,
       email: newEmail.trim() || null,
     })
     if (ok) {
       setNewName("")
-      setNewPhone("")
       setNewEmail("")
     }
   }
@@ -151,7 +148,7 @@ function AdminPlayersPage() {
         className="rounded border-2 border-[var(--rt-border)] bg-[var(--rt-surface)] p-5"
       >
         <h2 className="rt2-display text-2xl font-extrabold">Add new player</h2>
-        <div className="mt-3 grid gap-3 sm:grid-cols-4">
+        <div className="mt-3 grid gap-3 sm:grid-cols-3">
           <div>
             <label
               htmlFor="new-player-name"
@@ -167,22 +164,6 @@ function AdminPlayersPage() {
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               className="rt2-focus mt-1 h-11 w-full rounded border-2 border-[var(--rt-ui-border)] bg-[var(--rt-surface-alt)] px-3 text-[15px] font-semibold"
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="new-player-phone"
-              className="block text-[13px] font-bold text-[var(--rt-muted)]"
-            >
-              Phone (optional)
-            </label>
-            <input
-              id="new-player-phone"
-              type="text"
-              placeholder="0812-..."
-              value={newPhone}
-              onChange={(e) => setNewPhone(e.target.value)}
-              className="rt2-focus mt-1 h-11 w-full rounded border-2 border-[var(--rt-ui-border)] bg-[var(--rt-surface-alt)] px-3 font-arcade-mono text-[14px] font-semibold"
             />
           </div>
           <div>
@@ -291,7 +272,7 @@ function AdminPlayersPage() {
                           onChange={(e) => setEditNameLocked(e.target.checked)}
                           className="h-4 w-4 cursor-pointer accent-[var(--rt-accent)]"
                         />
-                        Force & lock username (prevent user self-edit)
+                        Force & lock name (prevent user self-edit)
                       </label>
                     </div>
                     <div className="flex items-center gap-2">
@@ -321,9 +302,6 @@ function AdminPlayersPage() {
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="text-[16px] font-bold">
                             {p.name}
-                          </span>
-                          <span className="font-arcade-mono text-[14px] text-[var(--rt-muted)]">
-                            {p.handle}
                           </span>
                           {isRounding && (
                             <span className="inline-flex items-center gap-1 rounded bg-[var(--rt-teal-soft)] px-2 py-0.5 font-arcade-mono text-[12px] font-bold text-[var(--rt-teal-ink)]">

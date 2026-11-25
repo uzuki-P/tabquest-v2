@@ -186,7 +186,7 @@ export const players = sqliteTable(
     avatarBanned: integer("avatar_banned", { mode: "boolean" })
       .notNull()
       .default(false),
-    /** Admin moderation flag preventing the player from editing their own username. */
+    /** Admin moderation flag preventing the player from editing their own name. */
     nameLocked: integer("name_locked", { mode: "boolean" })
       .notNull()
       .default(false),

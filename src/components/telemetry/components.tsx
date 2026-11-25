@@ -194,7 +194,7 @@ export function PlayerAvatar({
   player: Pick<PlayerSummary, "name" | "avatar" | "avatarUrl" | "avatarBanned"> & {
     id?: string
   }
-  size?: "sm" | "md" | "lg"
+  size?: "sm" | "md" | "lg" | "xl"
   chamfer?: boolean
   heroAttr?: boolean
   heroStyle?: boolean
@@ -205,7 +205,9 @@ export function PlayerAvatar({
       ? "h-7 w-7 text-[11px] rounded-xs"
       : size === "lg"
         ? "h-16 w-16 text-2xl rounded-sm"
-        : "h-10 w-10 text-[14px] rounded-sm"
+        : size === "xl"
+          ? "h-24 w-24 text-4xl rounded-sm sm:h-28 sm:w-28"
+          : "h-10 w-10 text-[14px] rounded-sm"
   const showImg = Boolean(player.avatarUrl) && !player.avatarBanned
   const bgColor = getAvatarColor(player.id ?? player.name)
 
@@ -340,14 +342,14 @@ export function CurrencyInput({
     <div>
       <label
         htmlFor={inputId}
-        className="mb-1.5 block text-[14px] font-bold text-[var(--rt-muted)]"
+        className="mb-1.5 block text-[14px] font-bold text-[var(--rt-ink)]"
       >
         {label}
       </label>
-      <div className="relative flex h-12 items-center rounded border-2 border-[var(--rt-ui-border)] bg-[var(--rt-surface-alt)] focus-within:border-[var(--rt-accent)]">
+      <div className="relative flex h-12 items-center rounded border-2 border-[var(--rt-border)] bg-[var(--rt-bg)] shadow-inner focus-within:border-[var(--rt-accent)]">
         <span
           aria-hidden
-          className="pl-3 font-arcade-mono text-[16px] font-bold text-[var(--rt-muted)] select-none"
+          className="pl-3 font-arcade-mono text-[16px] font-bold text-[var(--rt-accent-ink)] select-none"
         >
           Rp
         </span>
@@ -1057,170 +1059,219 @@ export function PayAllCard({
           </div>
 
           <div className="space-y-3">
-              <div
-                className="grid grid-cols-3 gap-1.5"
-                role="group"
-                aria-label="Quick amounts"
-              >
-                {roundOptions.map((opt) => {
-                  const chosen = selectedAmount === opt.amount
-                  return (
-                    <button
-                      key={opt.amount}
-                      type="button"
-                      aria-pressed={chosen}
-                      onClick={() => handleChipToggle(opt.amount)}
-                      className={`rt2-focus flex cursor-pointer flex-col items-start rounded border-2 px-2 py-1.5 text-left transition ${
-                        chosen
-                          ? "border-[var(--rt-ink)] bg-[var(--rt-ink)] text-[var(--rt-surface)]"
-                          : "rt2-btn-secondary"
-                      }`}
-                    >
-                      <span className="text-[12px] font-bold opacity-80">
-                        {opt.label}
-                      </span>
-                      <span className="tnum font-arcade-mono text-[14px] font-bold">
-                        {formatRupiah(opt.amount)}
-                      </span>
-                      {opt.tip > 0 && (
-                        <span
-                          className={`tnum font-arcade-mono text-[11px] ${
-                            chosen ? "text-[#5CE6DD]" : "text-[var(--rt-teal-ink)]"
-                          }`}
-                        >
-                          +{formatRupiah(opt.tip)}
-                        </span>
-                      )}
-                    </button>
-                  )
-                })}
-              </div>
-
-              <div>
-                <CurrencyInput
-                  label="Custom amount"
-                  value={selectedAmount}
-                  onChange={setSelectedAmount}
-                  onEnter={triggerNotify}
-                />
-                {underpay > 0 && (
-                  <p className="mt-1 flex items-center gap-1.5 text-[13px] font-semibold text-[var(--rt-accent-ink)]">
-                    <Warning size={15} weight="bold" className="shrink-0" />
-                    Below your split by {formatRupiah(underpay)}. Notify will
-                    report an underpay.
-                  </p>
-                )}
-              </div>
-          </div>
-
-              <div className="rounded border-2 border-[var(--rt-ui-border)] bg-[var(--rt-bg)] p-2.5">
-                <div className="flex items-baseline justify-between gap-2">
-                  <span className="text-[13px] font-bold">Tip rank</span>
-                  <span
-                    key={`${projection.projectedRank}-${selectedTip}`}
-                    className="rt2-rank-jump tnum font-arcade-mono text-[14px] font-bold text-[var(--rt-teal-ink)]"
+            <div
+              className="grid grid-cols-3 gap-1.5"
+              role="group"
+              aria-label="Quick amounts"
+            >
+              {roundOptions.map((opt) => {
+                const chosen = selectedAmount === opt.amount
+                return (
+                  <button
+                    key={opt.amount}
+                    type="button"
+                    aria-pressed={chosen}
+                    onClick={() => handleChipToggle(opt.amount)}
+                    className={`rt2-focus flex cursor-pointer flex-col items-start rounded border-2 px-2 py-1.5 text-left transition ${
+                      chosen
+                        ? "border-[var(--rt-ink)] bg-[var(--rt-ink)] text-[var(--rt-surface)]"
+                        : "rt2-btn-secondary"
+                    }`}
                   >
-                    {selectedTip === 0
-                      ? `#${projection.currentRank} (no change)`
-                      : `#${projection.currentRank} to #${projection.projectedRank}`}
-                  </span>
-                </div>
-                <p className="text-[12px] text-[var(--rt-muted)]">
-                  {projection.overtakes.length > 0
-                    ? `Passes ${projection.overtakes.join(" and ")}`
-                    : targets.currentRank === 1
-                      ? "You hold #1 on the Tip Rank"
-                      : selectedTip > 0
-                        ? `Adds +${formatRupiah(selectedTip)} tip`
-                        : "Pick a target or enter a custom amount"}
-                </p>
-                {targets.currentRank !== 1 &&
-                  (targets.toNext !== null || targets.toFirst !== null) && (
-                    <div className="mt-2 grid grid-cols-2 gap-1.5">
-                      {targets.toNext !== null && targets.nextRank !== null && (
-                        <button
-                          type="button"
-                          aria-pressed={selectedAmount === owed + targets.toNext}
-                          onClick={() => handleChipToggle(owed + targets.toNext!)}
-                          className={`rt2-focus flex cursor-pointer flex-col items-start rounded border-2 px-2 py-1.5 text-left transition ${
-                            selectedAmount === owed + targets.toNext
-                              ? "border-[var(--rt-ink)] bg-[var(--rt-ink)] text-[var(--rt-surface)]"
-                              : "rt2-btn-secondary"
-                          }`}
-                        >
-                          <span className="w-full truncate text-[12px] font-bold">
-                            Next #{targets.nextRank} {targets.nextName}
-                          </span>
-                          <span className="tnum font-arcade-mono text-[13px] font-bold">
-                            +{formatRupiah(targets.toNext)}
-                          </span>
-                        </button>
-                      )}
-                      {targets.toFirst !== null && (
-                        <button
-                          type="button"
-                          aria-pressed={selectedAmount === owed + targets.toFirst}
-                          onClick={() => handleChipToggle(owed + targets.toFirst!)}
-                          className={`rt2-focus flex cursor-pointer flex-col items-start rounded border-2 px-2 py-1.5 text-left transition ${
-                            selectedAmount === owed + targets.toFirst
-                              ? "border-[var(--rt-ink)] bg-[var(--rt-ink)] text-[var(--rt-surface)]"
-                              : "rt2-btn-secondary"
-                          }`}
-                        >
-                          <span className="flex w-full items-center gap-1 truncate text-[12px] font-bold">
-                            <Crown size={13} weight="fill" className="shrink-0 text-[var(--rt-amber-ink)]" />
-                            <span className="truncate">#1 {targets.firstName}</span>
-                          </span>
-                          <span className="tnum font-arcade-mono text-[13px] font-bold">
-                            +{formatRupiah(targets.toFirst)}
-                          </span>
-                        </button>
-                      )}
-                    </div>
-                  )}
-              </div>
-
-              {paymentMethods.length > 0 && (
-                <div className="space-y-1.5">
-                  <p className="text-[13px] font-bold text-[var(--rt-muted)]">
-                    Transfer to ({paymentMethods.length})
-                  </p>
-                  <div className="grid gap-1.5 sm:grid-cols-2">
-                  {paymentMethods.map((m) => {
-                    const isCopied = copiedMethodId === m.id
-                    return (
-                      <button
-                        key={m.id}
-                        type="button"
-                        onClick={() => handleCopyAccount(m.id, m.accountNumber)}
-                        className={`rt2-focus rt2-btn-secondary flex w-full items-start justify-between gap-2 rounded px-2.5 py-2 text-left ${
-                          isCopied ? "border-[var(--rt-teal)]" : ""
+                    <span className="text-[12px] font-bold opacity-80">
+                      {opt.label}
+                    </span>
+                    <span className="tnum font-arcade-mono text-[14px] font-bold">
+                      {formatRupiah(opt.amount)}
+                    </span>
+                    {opt.tip > 0 && (
+                      <span
+                        className={`tnum font-arcade-mono text-[11px] font-semibold ${
+                          chosen
+                            ? "text-current opacity-85"
+                            : "text-[var(--rt-teal-ink)]"
                         }`}
                       >
-                        <span className="min-w-0">
-                          <span className="block text-[13px] font-bold">
+                        +{formatRupiah(opt.tip)}
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
+              {targets.currentRank !== 1 &&
+                targets.toNext !== null &&
+                targets.nextRank !== null && (
+                  <button
+                    type="button"
+                    aria-pressed={selectedAmount === owed + targets.toNext}
+                    onClick={() => handleChipToggle(owed + targets.toNext!)}
+                    className={`rt2-focus flex cursor-pointer flex-col items-start rounded border-2 px-2 py-1.5 text-left transition ${
+                      selectedAmount === owed + targets.toNext
+                        ? "border-[var(--rt-ink)] bg-[var(--rt-ink)] text-[var(--rt-surface)]"
+                        : "rt2-btn-secondary"
+                    }`}
+                  >
+                    <span className="w-full truncate text-[12px] font-bold opacity-80">
+                      Next #{targets.nextRank} {targets.nextName}
+                    </span>
+                    <span className="tnum font-arcade-mono text-[14px] font-bold">
+                      {formatRupiah(owed + targets.toNext)}
+                    </span>
+                    <span
+                      className={`tnum font-arcade-mono text-[11px] font-semibold ${
+                        selectedAmount === owed + targets.toNext
+                          ? "text-current opacity-85"
+                          : "text-[var(--rt-teal-ink)]"
+                      }`}
+                    >
+                      +{formatRupiah(targets.toNext)}
+                    </span>
+                  </button>
+                )}
+              {targets.currentRank !== 1 && targets.toFirst !== null && (
+                <button
+                  type="button"
+                  aria-pressed={selectedAmount === owed + targets.toFirst}
+                  onClick={() => handleChipToggle(owed + targets.toFirst!)}
+                  className={`rt2-focus flex cursor-pointer flex-col items-start rounded border-2 px-2 py-1.5 text-left transition ${
+                    selectedAmount === owed + targets.toFirst
+                      ? "border-[var(--rt-ink)] bg-[var(--rt-ink)] text-[var(--rt-surface)]"
+                      : "rt2-btn-secondary"
+                  }`}
+                >
+                  <span className="flex w-full items-center gap-1 truncate text-[12px] font-bold opacity-80">
+                    <Crown
+                      size={12}
+                      weight="fill"
+                      className={
+                        selectedAmount === owed + targets.toFirst
+                          ? "shrink-0 text-current"
+                          : "shrink-0 text-[var(--rt-amber-ink)]"
+                      }
+                    />
+                    <span className="truncate">#1 {targets.firstName}</span>
+                  </span>
+                  <span className="tnum font-arcade-mono text-[14px] font-bold">
+                    {formatRupiah(owed + targets.toFirst)}
+                  </span>
+                  <span
+                    className={`tnum font-arcade-mono text-[11px] font-semibold ${
+                      selectedAmount === owed + targets.toFirst
+                        ? "text-current opacity-85"
+                        : "text-[var(--rt-teal-ink)]"
+                    }`}
+                  >
+                    +{formatRupiah(targets.toFirst)}
+                  </span>
+                </button>
+              )}
+            </div>
+
+            <div className="flex flex-wrap items-baseline justify-between gap-2 px-0.5 text-[12px]">
+              <span
+                className="text-[var(--rt-muted)]"
+                title={
+                  projection.overtakes.length > 2
+                    ? `Passes ${projection.overtakes.join(", ")}`
+                    : undefined
+                }
+              >
+                {projection.overtakes.length === 1
+                  ? `Passes ${projection.overtakes[0]}`
+                  : projection.overtakes.length === 2
+                    ? `Passes ${projection.overtakes[0]} and ${projection.overtakes[1]}`
+                    : projection.overtakes.length > 2
+                      ? `Passes ${projection.overtakes[0]} and ${projection.overtakes.length - 1} others`
+                      : targets.currentRank === 1
+                        ? "You hold #1 on the Tip Rank"
+                        : selectedTip > 0
+                          ? `Adds +${formatRupiah(selectedTip)} tip`
+                          : "Pick a quick amount or enter a custom amount"}
+              </span>
+              <span
+                key={`${projection.projectedRank}-${selectedTip}`}
+                className="rt2-rank-jump tnum font-arcade-mono text-[13px] font-bold text-[var(--rt-teal-ink)]"
+              >
+                Tip rank:{" "}
+                {selectedTip === 0
+                  ? `#${projection.currentRank}`
+                  : `#${projection.currentRank} to #${projection.projectedRank}`}
+              </span>
+            </div>
+
+            <div>
+              <CurrencyInput
+                label="Custom amount"
+                value={selectedAmount}
+                onChange={setSelectedAmount}
+                onEnter={triggerNotify}
+              />
+              {underpay > 0 && (
+                <p className="mt-1 flex items-center gap-1.5 text-[13px] font-semibold text-[var(--rt-accent-ink)]">
+                  <Warning size={15} weight="bold" className="shrink-0" />
+                  Below your split by {formatRupiah(underpay)}. Notify will
+                  report an underpay.
+                </p>
+              )}
+            </div>
+          </div>
+
+          {paymentMethods.length > 0 && (
+            <div className="space-y-1.5">
+              <p className="text-[12px] font-bold uppercase tracking-wider text-[var(--rt-muted)]">
+                Transfer to ({paymentMethods.length})
+              </p>
+              <ul className="divide-y divide-[var(--rt-border-soft)] rounded border border-[var(--rt-border-soft)] bg-[var(--rt-bg)]/60">
+                {paymentMethods.map((m) => {
+                  const isCopied = copiedMethodId === m.id
+                  return (
+                    <li
+                      key={m.id}
+                      className="flex items-center justify-between gap-3 px-3 py-2"
+                    >
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-baseline gap-x-2">
+                          <span className="text-[13px] font-semibold text-[var(--rt-muted)]">
                             {m.label}
                             {m.isPrimary ? " (Primary)" : ""}
                           </span>
-                          <span className="tnum block font-arcade-mono text-[16px] font-bold">
+                          <span className="tnum font-arcade-mono text-[14px] font-bold text-[var(--rt-ink)]">
                             {m.accountNumber}
                           </span>
-                          <span className="block text-[12px] break-words text-[var(--rt-muted)]">
-                            {m.accountHolder}
-                            {m.note ? ` · ${m.note}` : ""}
-                          </span>
-                        </span>
+                        </div>
+                        <p className="truncate text-[12px] text-[var(--rt-muted)]">
+                          {m.accountHolder}
+                          {m.note ? ` · ${m.note}` : ""}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleCopyAccount(m.id, m.accountNumber)}
+                        aria-label={`Copy ${m.label} account number`}
+                        className={`rt2-focus inline-flex h-8 shrink-0 cursor-pointer items-center gap-1 rounded border px-2.5 text-[12px] font-bold transition ${
+                          isCopied
+                            ? "border-[var(--rt-teal)] bg-[var(--rt-teal-soft)] text-[var(--rt-teal-ink)]"
+                            : "border-[var(--rt-border-soft)] bg-[var(--rt-surface)] text-[var(--rt-muted)] hover:border-[var(--rt-border)] hover:text-[var(--rt-ink)]"
+                        }`}
+                      >
                         {isCopied ? (
-                          <Check size={16} weight="bold" className="mt-0.5 shrink-0 text-[var(--rt-teal-ink)]" />
+                          <>
+                            <Check size={13} weight="bold" />
+                            Copied
+                          </>
                         ) : (
-                          <Copy size={16} className="mt-0.5 shrink-0 text-[var(--rt-teal-ink)]" />
+                          <>
+                            <Copy size={13} />
+                            Copy
+                          </>
                         )}
                       </button>
-                    )
-                  })}
-                  </div>
-                </div>
-              )}
+                    </li>
+                  )
+                })}
+              </ul>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-2.5">
             <button

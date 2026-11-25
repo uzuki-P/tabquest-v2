@@ -8,7 +8,7 @@ import {
   X,
 } from "@phosphor-icons/react"
 import { Link, createFileRoute } from "@tanstack/react-router"
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import {
   BillBossAvatar,
@@ -71,6 +71,18 @@ function BillDetailRoute() {
     toggleBillPlayerPayment,
   } = useAppStore()
   const [receiptOpen, setReceiptOpen] = useState(false)
+  const [receiptLoaded, setReceiptLoaded] = useState(false)
+  const [receiptScroll, setReceiptScroll] = useState({ canUp: false, canDown: false })
+  const receiptScrollRef = useRef<HTMLDivElement>(null)
+
+  const syncReceiptScroll = useCallback(() => {
+    const el = receiptScrollRef.current
+    if (!el) return
+    setReceiptScroll({
+      canUp: el.scrollTop > 4,
+      canDown: el.scrollTop + el.clientHeight < el.scrollHeight - 4,
+    })
+  }, [])
   const [customPayTarget, setCustomPayTarget] = useState<{
     billPlayerId: string
     playerName: string
@@ -170,7 +182,10 @@ function BillDetailRoute() {
           <div className="flex flex-wrap items-center gap-2.5">
             <button
               type="button"
-              onClick={() => setReceiptOpen(true)}
+              onClick={() => {
+                setReceiptLoaded(false)
+                setReceiptOpen(true)
+              }}
               className="rt2-focus rt2-btn-secondary inline-flex min-h-[44px] items-center gap-2 rounded px-4 text-[15px] font-bold"
             >
               <Receipt size={18} weight="bold" />
@@ -465,12 +480,52 @@ function BillDetailRoute() {
             </div>
 
             {bill.receiptUrl ? (
-              <div className="max-h-[65vh] overflow-auto rounded border border-[var(--rt-border-soft)] bg-black/5">
-                <img
-                  src={bill.receiptUrl}
-                  alt={`${bill.merchant} receipt`}
-                  className="mx-auto w-full object-contain"
-                />
+              <div className="relative overflow-hidden rounded border border-[var(--rt-border-soft)] bg-[var(--rt-bg)]">
+                {receiptScroll.canUp && (
+                  <div
+                    aria-hidden
+                    className="pointer-events-none absolute inset-x-0 top-0 z-10 h-10 bg-gradient-to-b from-black/45 to-transparent"
+                  />
+                )}
+                <div
+                  ref={receiptScrollRef}
+                  onScroll={syncReceiptScroll}
+                  className="relative min-h-[360px] max-h-[65vh] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                >
+                  {!receiptLoaded && (
+                    <div
+                      aria-hidden
+                      className="absolute inset-0 flex flex-col items-center justify-center gap-2.5 text-[var(--rt-muted)]"
+                    >
+                      <Receipt
+                        size={36}
+                        weight="duotone"
+                        className="animate-pulse opacity-60"
+                      />
+                      <span className="font-arcade-mono text-[13px]">
+                        Loading receipt photo...
+                      </span>
+                    </div>
+                  )}
+                  <img
+                    src={bill.receiptUrl}
+                    alt={`${bill.merchant} receipt`}
+                    onLoad={() => {
+                      setReceiptLoaded(true)
+                      requestAnimationFrame(syncReceiptScroll)
+                    }}
+                    onError={() => setReceiptLoaded(true)}
+                    className={`mx-auto w-full object-contain transition-opacity duration-200 ${
+                      receiptLoaded ? "opacity-100" : "opacity-0"
+                    }`}
+                  />
+                </div>
+                {receiptScroll.canDown && (
+                  <div
+                    aria-hidden
+                    className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-10 bg-gradient-to-t from-black/45 to-transparent"
+                  />
+                )}
               </div>
             ) : (
               <div className="mx-auto max-w-[380px] rotate-[1deg] border-y-4 border-dashed border-[#CBD5E1] bg-white p-5 font-arcade-mono text-[15px] text-[#1A1A1A] shadow-lg">

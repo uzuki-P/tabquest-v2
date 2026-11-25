@@ -75,11 +75,7 @@ function AllRanksRoute() {
   const filterList = (list: PlayerSummary[]) => {
     const q = query.trim().toLowerCase()
     const filtered = list.filter((p) => {
-      if (
-        q &&
-        !p.name.toLowerCase().includes(q) &&
-        !p.handle.toLowerCase().includes(q)
-      ) {
+      if (q && !p.name.toLowerCase().includes(q)) {
         return false
       }
       if (
@@ -151,7 +147,7 @@ function AllRanksRoute() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search pilot name or handle"
+            placeholder="Search player name"
             aria-label="Search players"
             className="h-full w-full bg-transparent px-2.5 text-[15px] text-[var(--rt-ink)] focus:outline-none"
           />
@@ -308,9 +304,6 @@ function AllRanksRoute() {
                                   {p.name}
                                 </span>
                               </PlayerHoverCard>
-                              <span className="truncate font-arcade-mono text-[13px] text-[var(--rt-muted)] sm:text-[14px]">
-                                {p.handle}
-                              </span>
                               {showYouBadge && (
                                 <span className="rounded bg-[var(--rt-accent)] px-1.5 py-0.5 font-arcade-mono text-[11px] font-bold text-[var(--rt-accent-fg)] sm:text-[12px]">
                                   You
@@ -412,9 +405,6 @@ function AllRanksRoute() {
                                   {p.name}
                                 </span>
                               </PlayerHoverCard>
-                              <span className="truncate font-arcade-mono text-[13px] text-[var(--rt-muted)] sm:text-[14px]">
-                                {p.handle}
-                              </span>
                               {showYouBadge && (
                                 <span className="rounded bg-[var(--rt-accent)] px-1.5 py-0.5 font-arcade-mono text-[11px] font-bold text-[var(--rt-accent-fg)] sm:text-[12px]">
                                   You
