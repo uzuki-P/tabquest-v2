@@ -44,8 +44,21 @@ function getTabIndex(pathname: string): number {
   return 0
 }
 
+function getAdminLoadingLabel(pathname: string): string {
+  if (pathname.startsWith("/admin/players")) return "Loading players..."
+  if (pathname.startsWith("/admin/settings")) return "Loading settings..."
+  return "Loading bills..."
+}
+
 function AdminLayoutRoute() {
-  const pathname = useRouterState({ select: (s) => s.location.pathname })
+  const { pathname, resolvedPathname, isLoading } = useRouterState({
+    select: (s) => ({
+      pathname: s.location.pathname,
+      resolvedPathname: s.resolvedLocation?.pathname ?? s.location.pathname,
+      isLoading: s.isLoading || s.status === "pending",
+    }),
+  })
+  const isNavigatingTab = isLoading && pathname !== resolvedPathname
   const {
     role,
     me,
@@ -207,14 +220,18 @@ function AdminLayoutRoute() {
         </button>
       </div>
 
-      <div
-        key={pathname}
-        className={
-          tabDir === "right" ? "rt2-panel-in-right" : "rt2-panel-in-left"
-        }
-      >
-        <Outlet />
-      </div>
+      {isNavigatingTab ? (
+        <PageLoading label={getAdminLoadingLabel(pathname)} />
+      ) : (
+        <div
+          key={resolvedPathname}
+          className={
+            tabDir === "right" ? "rt2-panel-in-right" : "rt2-panel-in-left"
+          }
+        >
+          <Outlet />
+        </div>
+      )}
     </div>
   )
 }

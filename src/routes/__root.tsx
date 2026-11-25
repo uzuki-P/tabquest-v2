@@ -13,6 +13,7 @@ import { DevBadge } from "@/components/DevBadge"
 import {
   AdminCollectDrawer,
   AppHeader,
+  PageLoading,
 } from "@/components/telemetry/components"
 import { TELEMETRY_STYLES } from "@/components/telemetry/styles"
 import { getPlayerUnpaidTotal } from "@/domain/types"
@@ -81,8 +82,26 @@ function RootLayout() {
 declare const __APP_VERSION__: string
 declare const __APP_BUILD_TIME__: string
 
+function getPageLoadingLabel(pathname: string): string {
+  if (pathname === "/") return "Loading board..."
+  if (pathname.startsWith("/bills")) return "Loading bills..."
+  if (pathname.startsWith("/ranks")) return "Loading ranks..."
+  if (pathname.startsWith("/b/")) return "Loading bill..."
+  if (pathname.startsWith("/players/")) return "Loading dossier..."
+  if (pathname.startsWith("/admin/players")) return "Loading players..."
+  if (pathname.startsWith("/admin/settings")) return "Loading settings..."
+  if (pathname.startsWith("/admin")) return "Loading admin..."
+  return "Loading page..."
+}
+
 function AppShell() {
-  const pathname = useRouterState({ select: (s) => s.location.pathname })
+  const { pathname, resolvedPathname, isLoading } = useRouterState({
+    select: (s) => ({
+      pathname: s.location.pathname,
+      resolvedPathname: s.resolvedLocation?.pathname ?? s.location.pathname,
+      isLoading: s.isLoading || s.status === "pending",
+    }),
+  })
   const {
     players,
     role,
@@ -105,7 +124,14 @@ function AppShell() {
     0
   )
   // Keep /admin layout mounted across admin sub-tabs so the tab bar never re-animates
-  const mainTransitionKey = pathname.startsWith("/admin") ? "/admin" : pathname
+  const targetMainKey = pathname.startsWith("/admin") ? "/admin" : pathname
+  const resolvedMainKey = resolvedPathname.startsWith("/admin")
+    ? "/admin"
+    : resolvedPathname
+  const isNavigatingMain = isLoading && targetMainKey !== resolvedMainKey
+  const mainTransitionKey = isNavigatingMain
+    ? `pending:${targetMainKey}`
+    : resolvedMainKey
 
   // Subtle mobile haptic pulse on interactive taps
   useEffect(() => {
@@ -146,7 +172,11 @@ function AppShell() {
         key={mainTransitionKey}
         className="rt2-page-enter mx-auto max-w-[1200px] space-y-7 px-4 pt-6"
       >
-        <Outlet />
+        {isNavigatingMain ? (
+          <PageLoading label={getPageLoadingLabel(pathname)} />
+        ) : (
+          <Outlet />
+        )}
       </main>
 
       <footer className="mx-auto mt-12 max-w-[1200px] px-4 text-center">

@@ -73,4 +73,22 @@ describe("UI, mobile & accessibility guards", () => {
     }
     expect(violations).toEqual([])
   })
+
+  it("configures immediate router pending fallback for lazy route chunks", () => {
+    const routerSource = readFileSync(join(SRC_ROOT, "router.tsx"), "utf8")
+    expect(routerSource).toContain("defaultPendingMs: 0")
+    expect(routerSource).toContain("defaultPendingComponent")
+  })
+
+  it("uses resolvedLocation for route transition containers so outgoing pages never re-animate", () => {
+    for (const rel of ["routes/__root.tsx", "routes/admin.tsx"]) {
+      const source = readFileSync(join(SRC_ROOT, rel), "utf8")
+      expect(source, `${rel} should track resolvedLocation`).toContain(
+        "resolvedLocation"
+      )
+      expect(source, `${rel} should render PageLoading while pending`).toContain(
+        "<PageLoading"
+      )
+    }
+  })
 })

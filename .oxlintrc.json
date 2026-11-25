@@ -23,6 +23,22 @@
       {
         "prefer": "type-imports"
       }
-    ]
-  }
+    ],
+    "no-restricted-globals": ["error", "Bun"]
+  },
+  "overrides": [
+    {
+      "files": ["src/server/**/*.ts", "src/db/**/*.ts"],
+      "rules": {
+        "no-await-in-loop": "error"
+      }
+    },
+    {
+      "files": ["**/*.test.ts", "**/*.test.tsx", "scripts/**/*.ts"],
+      "rules": {
+        "no-restricted-globals": "off",
+        "no-await-in-loop": "off"
+      }
+    }
+  ]
 }
