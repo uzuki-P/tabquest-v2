@@ -1,0 +1,65 @@
+name: Deploy to Cloudflare Workers
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Check, Migrate & Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Typecheck, lint & test
+        run: |
+          bun run typecheck
+          bun run lint
+          bun test
+
+      - name: Generate wrangler.prod.jsonc from secrets
+        env:
+          D1_DATABASE_ID: ${{ secrets.D1_DATABASE_ID }}
+          CUSTOM_DOMAIN: ${{ secrets.CUSTOM_DOMAIN }}
+        run: |
+          bun -e '
+            const fs = require("node:fs");
+            const cfg = JSON.parse(fs.readFileSync("wrangler.jsonc", "utf8"));
+            if (!process.env.D1_DATABASE_ID) {
+              throw new Error("Missing D1_DATABASE_ID secret");
+            }
+            cfg.d1_databases[0].database_id = process.env.D1_DATABASE_ID;
+            if (process.env.CUSTOM_DOMAIN) {
+              cfg.routes = [{ pattern: process.env.CUSTOM_DOMAIN, custom_domain: true }];
+            }
+            fs.writeFileSync("wrangler.prod.jsonc", JSON.stringify(cfg, null, 2) + "\n");
+          '
+
+      - name: Apply remote D1 migrations
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CI: "true"
+        run: bunx wrangler d1 migrations apply tabquest-db --remote --config wrangler.prod.jsonc
+
+      - name: Build & deploy Worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          bun run build
+          bunx wrangler deploy --config wrangler.prod.jsonc
