@@ -77,6 +77,8 @@ function RootLayout() {
   )
 }
 
+declare const __APP_VERSION__: string
+
 function AppShell() {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
   const {
@@ -146,6 +148,12 @@ function AppShell() {
       >
         <Outlet />
       </main>
+
+      <footer className="mx-auto mt-12 max-w-[1200px] px-4 text-center">
+        <p className="font-arcade-mono text-[12px] text-[var(--rt-muted)] opacity-75">
+          Tabquest {__APP_VERSION__}
+        </p>
+      </footer>
 
       {toast && (
         <div

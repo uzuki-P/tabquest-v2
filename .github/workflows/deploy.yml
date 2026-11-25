@@ -31,7 +31,7 @@ jobs:
           bun run lint
           bun test
 
-      - name: Generate wrangler.prod.jsonc from secrets
+      - name: Configure wrangler.jsonc from secrets
         env:
           D1_DATABASE_ID: ${{ secrets.D1_DATABASE_ID }}
           CUSTOM_DOMAIN: ${{ secrets.CUSTOM_DOMAIN }}
@@ -46,7 +46,7 @@ jobs:
             if (process.env.CUSTOM_DOMAIN) {
               cfg.routes = [{ pattern: process.env.CUSTOM_DOMAIN, custom_domain: true }];
             }
-            fs.writeFileSync("wrangler.prod.jsonc", JSON.stringify(cfg, null, 2) + "\n");
+            fs.writeFileSync("wrangler.jsonc", JSON.stringify(cfg, null, 2) + "\n");
           '
 
       - name: Apply remote D1 migrations
@@ -54,7 +54,7 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CI: "true"
-        run: bunx wrangler d1 migrations apply tabquest-db --remote --config wrangler.prod.jsonc
+        run: bunx wrangler d1 migrations apply tabquest-db --remote
 
       - name: Build & deploy Worker
         env:
@@ -62,4 +62,4 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           bun run build
-          bunx wrangler deploy --config wrangler.prod.jsonc
+          bunx wrangler deploy
