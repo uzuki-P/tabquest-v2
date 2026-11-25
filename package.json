@@ -1,0 +1,48 @@
+{
+  "name": "tabquest-v2",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev --host 127.0.0.1",
+    "build": "vite build",
+    "preview": "vite preview",
+    "deploy": "vite build && wrangler deploy",
+    "test": "bun test",
+    "lint": "oxlint",
+    "typecheck": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "cf-typegen": "wrangler types"
+  },
+  "dependencies": {
+    "@base-ui/react": "^1.8.0",
+    "@phosphor-icons/react": "^2.1.10",
+    "@tailwindcss/vite": "^4.1.18",
+    "@tanstack/react-router": "^1.169.7",
+    "@tanstack/react-start": "^1.169.7",
+    "better-auth": "^1.7.27",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "drizzle-orm": "^0.45.4",
+    "react": "^19.2.4",
+    "react-day-picker": "^10.0.2",
+    "react-dom": "^19.2.4",
+    "tailwind-merge": "^3.7.0",
+    "tailwindcss": "^4.1.18",
+    "uuidv7": "^1.1.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.70.1",
+    "@types/bun": "^1.4.2",
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.4",
+    "drizzle-kit": "^0.31.10",
+    "oxlint": "^1.56.0",
+    "typescript": "^5.9.3",
+    "vite": "^8.0.0",
+    "wrangler": "^4.166.0"
+  }
+}

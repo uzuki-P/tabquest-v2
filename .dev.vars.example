@@ -1,0 +1,20 @@
+# Local Cloudflare Workers / Wrangler dev secrets.
+# Copy this file to `.dev.vars` (gitignored) and fill in your local values.
+# Primary login uses Shoo (https://shoo.dev) with zero OAuth app credentials.
+
+BETTER_AUTH_URL=http://localhost:3000
+BETTER_AUTH_SECRET=replace-with-32-byte-random-secret
+ADMIN_EMAIL=admin@example.com
+
+# Optional direct Google OAuth fallback (leave commented out to use Shoo only):
+# GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+# GOOGLE_CLIENT_SECRET=your-google-client-secret
+
+# Optional T14 homelab vision-api OCR (Cloudflare Tunnel + Access Service Token):
+# VISION_API_URL=https://vision.example.com
+# VISION_API_TOKEN=replace-with-vision-api-token
+# VISION_API_PROVIDER=zcode
+# VISION_API_MODEL=
+# VISION_API_REASONING_EFFORT=
+# CF_ACCESS_CLIENT_ID=replace-with-cf-access-client-id
+# CF_ACCESS_CLIENT_SECRET=replace-with-cf-access-client-secret
