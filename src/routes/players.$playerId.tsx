@@ -22,6 +22,7 @@ import { AvatarUploadDialog } from "@/components/telemetry/AvatarUploadDialog"
 import { PlayerHoverCard } from "@/components/telemetry/PlayerHoverCard"
 import {
   EarnedBadgePill,
+  PageLoading,
   PayAllCard,
   PlayerAvatar,
   TierPill,
@@ -191,13 +192,7 @@ function PlayerDetailRoute() {
     monthlySeries.find((m) => m.key === hoveredMonth) ?? currMonth ?? null
 
   if (loading && !detail) {
-    return (
-      <section className="rounded border-2 border-[var(--rt-border)] bg-[var(--rt-surface)] p-10 text-center">
-        <p className="rt2-display text-3xl font-extrabold">
-          Loading dossier...
-        </p>
-      </section>
-    )
+    return <PageLoading label="Loading dossier..." />
   }
 
   if (notFound || !detail) {
@@ -556,7 +551,7 @@ function PlayerDetailRoute() {
       </section>
 
       <section className="grid gap-6 lg:grid-cols-12">
-        <div className="space-y-6 lg:col-span-8">
+        <div className="min-w-0 space-y-6 lg:col-span-8">
           {/* Monthly Badges (v1 sticker badges + trophy cards) */}
           <div className="rounded border-2 border-[var(--rt-border)] bg-[var(--rt-surface)] p-5">
             <div className="flex items-baseline justify-between border-b border-[var(--rt-border-soft)] pb-2.5">
@@ -639,7 +634,7 @@ function PlayerDetailRoute() {
           {/* 1. Monthly Spend & Pace + 2. Order Rhythm (Mon-Sun) */}
           <div className="grid gap-5 md:grid-cols-2">
             {/* Monthly Spend & Pace */}
-            <div className="flex flex-col rounded border-2 border-[var(--rt-border)] bg-[var(--rt-surface)] p-4 sm:p-5">
+            <div className="flex min-w-0 flex-col rounded border-2 border-[var(--rt-border)] bg-[var(--rt-surface)] p-4 sm:p-5">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <h2 className="rt2-display text-2xl font-extrabold">
                   Monthly spend
@@ -712,10 +707,10 @@ function PlayerDetailRoute() {
                       onFocus={() => setHoveredMonth(m.key)}
                       onClick={() => setHoveredMonth(m.key)}
                       aria-label={`${m.label}: ${formatRupiah(m.spend + m.tips)} out of pocket across ${m.orders} bills`}
-                      className="rt2-focus relative flex h-full flex-1 cursor-pointer flex-col items-center justify-end"
+                      className="rt2-focus relative flex h-full min-w-0 flex-1 cursor-pointer flex-col items-center justify-end"
                     >
                       <span
-                        className={`tnum mb-1 font-arcade-mono text-[11px] font-bold ${
+                        className={`tnum mb-1 truncate font-arcade-mono text-[10px] font-bold sm:text-[11px] ${
                           isActive
                             ? "text-[var(--rt-ink)]"
                             : "text-[var(--rt-muted)]"
@@ -752,9 +747,9 @@ function PlayerDetailRoute() {
                 })}
               </div>
 
-              <div className="mt-2 flex gap-2 text-center font-arcade-mono text-[12px] sm:gap-3">
+              <div className="mt-2 flex gap-2 text-center font-arcade-mono text-[11px] sm:gap-3 sm:text-[12px]">
                 {monthlySeries.map((m) => (
-                  <div key={m.key} className="flex-1">
+                  <div key={m.key} className="min-w-0 flex-1">
                     <p
                       className={`font-bold ${
                         activeMonth?.key === m.key
@@ -1287,7 +1282,7 @@ function PlayerDetailRoute() {
           )}
         </div>
 
-        <aside className="lg:col-span-4">
+        <aside className="min-w-0 lg:col-span-4">
           <div className="lg:sticky lg:top-20">
             <PayAllCard
               player={player}

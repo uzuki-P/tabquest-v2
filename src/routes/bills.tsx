@@ -4,6 +4,7 @@ import { useState } from "react"
 
 import {
   MonthStepper,
+  PageLoading,
   fmtDate,
   monthTitleFromKey,
 } from "@/components/telemetry/components"
@@ -43,11 +44,7 @@ function BillsArchivePage() {
     : bills
 
   if (loading && bills.length === 0) {
-    return (
-      <section className="rounded border-2 border-[var(--rt-border)] bg-[var(--rt-surface)] p-10 text-center">
-        <p className="rt2-display text-3xl font-extrabold">Loading bills...</p>
-      </section>
-    )
+    return <PageLoading label="Loading bills..." />
   }
 
   return (

@@ -79,6 +79,7 @@ function RootLayout() {
 }
 
 declare const __APP_VERSION__: string
+declare const __APP_BUILD_TIME__: string
 
 function AppShell() {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
@@ -151,6 +152,9 @@ function AppShell() {
       <footer className="mx-auto mt-12 max-w-[1200px] px-4 text-center">
         <p className="font-arcade-mono text-[12px] text-[var(--rt-muted)] opacity-75">
           Tabquest {__APP_VERSION__}
+        </p>
+        <p className="mt-0.5 font-arcade-mono text-[11px] text-[var(--rt-muted)] opacity-60">
+          {__APP_BUILD_TIME__}
         </p>
       </footer>
 

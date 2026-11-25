@@ -13,6 +13,7 @@ import { useEffect, useMemo, useState } from "react"
 import {
   CurrencyInput,
   HpBar,
+  PageLoading,
   PlayerAvatar,
   fmtDate,
 } from "@/components/telemetry/components"
@@ -123,11 +124,7 @@ function BillDetailRoute() {
   }, [detail])
 
   if (loading) {
-    return (
-      <section className="rounded border-2 border-[var(--rt-border)] bg-[var(--rt-surface)] p-10 text-center">
-        <p className="rt2-display text-3xl font-extrabold">Loading bill...</p>
-      </section>
-    )
+    return <PageLoading label="Loading bill..." />
   }
 
   if (notFound || !detail) {

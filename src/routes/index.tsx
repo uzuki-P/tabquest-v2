@@ -9,6 +9,7 @@ import { Link, createFileRoute } from "@tanstack/react-router"
 
 import {
   HpBar,
+  PageLoading,
   PayAllCard,
   PlayerAvatar,
   fmtDate,
@@ -63,11 +64,7 @@ function HomePage() {
   )
 
   if (loading && players.length === 0) {
-    return (
-      <section className="rounded border-2 border-[var(--rt-border)] bg-[var(--rt-surface)] p-10 text-center">
-        <p className="rt2-display text-3xl font-extrabold">Loading board...</p>
-      </section>
-    )
+    return <PageLoading label="Loading board..." />
   }
 
   return (
@@ -154,7 +151,7 @@ function HomePage() {
                 }`}
               >
                 <div
-                  className={`rt2-roster-chip-inner flex min-h-[58px] w-full items-center gap-2.5 px-3 py-2 ${
+                  className={`rt2-roster-chip-inner flex min-h-[58px] w-full items-center gap-2 px-2.5 py-2 sm:gap-2.5 sm:px-3 ${
                     active
                       ? "bg-[var(--rt-accent)] text-[var(--rt-accent-fg)]"
                       : "bg-[var(--rt-surface-alt)] text-[var(--rt-ink)]"
@@ -169,9 +166,20 @@ function HomePage() {
                           ? ` (${p.unpaidBills.length})`
                           : ""}
                       </span>
+                      {isSelf && (
+                        <span
+                          className={`shrink-0 rounded px-1 py-0.5 font-arcade-mono text-[9px] leading-none font-bold uppercase ${
+                            active
+                              ? "bg-black/20 text-current"
+                              : "bg-[var(--rt-accent-soft)] text-[var(--rt-accent-ink)]"
+                          }`}
+                        >
+                          You
+                        </span>
+                      )}
                     </div>
                     <p
-                      className={`tnum font-arcade-mono text-[13px] font-semibold ${
+                      className={`tnum truncate font-arcade-mono text-[13px] font-semibold whitespace-nowrap ${
                         active
                           ? "opacity-90"
                           : pOwed > 0
@@ -182,26 +190,14 @@ function HomePage() {
                       {pOwed > 0 ? formatRupiah(pOwed) : "All clear"}
                     </p>
                   </div>
-                  {isSelf ? (
-                    <span
-                      className={`shrink-0 rounded px-1.5 py-0.5 font-arcade-mono text-[10px] font-bold uppercase ${
-                        active
-                          ? "bg-black/20 text-current"
-                          : "bg-[var(--rt-accent-soft)] text-[var(--rt-accent-ink)]"
+                  {pOwed === 0 && (
+                    <Check
+                      size={14}
+                      weight="bold"
+                      className={`shrink-0 ${
+                        active ? "" : "text-[var(--rt-teal-ink)]"
                       }`}
-                    >
-                      You
-                    </span>
-                  ) : (
-                    pOwed === 0 && (
-                      <Check
-                        size={14}
-                        weight="bold"
-                        className={`shrink-0 ${
-                          active ? "" : "text-[var(--rt-teal-ink)]"
-                        }`}
-                      />
-                    )
+                    />
                   )}
                 </div>
               </button>

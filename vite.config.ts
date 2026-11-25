@@ -22,9 +22,17 @@ function resolveAppVersion(): string {
   return `v${version} (${sha})`
 }
 
+function resolveBuildTime(): string {
+  const d = new Date()
+  const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+  const pad = (n: number) => String(n).padStart(2, "0")
+  return `${days[d.getDay()]}, ${pad(d.getDate())} ${pad(d.getMonth() + 1)} ${d.getFullYear()} - ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+}
+
 export default defineConfig({
   define: {
     __APP_VERSION__: JSON.stringify(resolveAppVersion()),
+    __APP_BUILD_TIME__: JSON.stringify(resolveBuildTime()),
   },
   resolve: {
     tsconfigPaths: true,

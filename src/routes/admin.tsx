@@ -16,6 +16,7 @@ import {
 } from "@tanstack/react-router"
 import { useLayoutEffect, useRef, useState } from "react"
 
+import { PageLoading } from "@/components/telemetry/components"
 import { useAppStore } from "@/lib/app-store"
 
 export const Route = createFileRoute("/admin")({
@@ -75,14 +76,21 @@ function AdminLayoutRoute() {
   const tabRefs = useRef<Array<HTMLAnchorElement | null>>([])
   const [indicator, setIndicator] = useState<{
     left: number
+    top: number
     width: number
+    height: number
   } | null>(null)
 
   useLayoutEffect(() => {
     const measure = () => {
       const el = tabRefs.current[activeIdx]
       if (!el) return
-      setIndicator({ left: el.offsetLeft, width: el.offsetWidth })
+      setIndicator({
+        left: el.offsetLeft,
+        top: el.offsetTop,
+        width: el.offsetWidth,
+        height: el.offsetHeight,
+      })
     }
     measure()
     const nav = navRef.current
@@ -98,19 +106,7 @@ function AdminLayoutRoute() {
   ).length
 
   if (authLoading) {
-    return (
-      <section className="mx-auto max-w-xl rounded border-2 border-[var(--rt-border)] bg-[var(--rt-surface)] p-8 text-center">
-        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded border-2 border-[var(--rt-ui-border)] bg-[var(--rt-surface-alt)] text-[var(--rt-muted)]">
-          <ShieldCheck size={24} weight="bold" className="animate-pulse" />
-        </div>
-        <p className="rt2-display mt-4 text-3xl font-extrabold">
-          Checking admin session...
-        </p>
-        <p className="mt-1.5 text-[14px] text-[var(--rt-muted)]">
-          Verifying your sign-in status.
-        </p>
-      </section>
-    )
+    return <PageLoading label="Checking admin session..." />
   }
 
   if (role !== "admin") {
@@ -161,10 +157,11 @@ function AdminLayoutRoute() {
             <span
               aria-hidden="true"
               style={{
-                transform: `translateX(${indicator.left}px)`,
+                transform: `translate(${indicator.left}px, ${indicator.top}px)`,
                 width: `${indicator.width}px`,
+                height: `${indicator.height}px`,
               }}
-              className="pointer-events-none absolute top-0 bottom-0 left-0 rounded-t border-b-2 border-[var(--rt-accent)] bg-[var(--rt-accent-soft)] transition-[transform,width] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]"
+              className="pointer-events-none absolute top-0 left-0 rounded-t border-b-2 border-[var(--rt-accent)] bg-[var(--rt-accent-soft)] transition-[transform,width,height] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]"
             />
           )}
 

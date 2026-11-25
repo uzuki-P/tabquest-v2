@@ -1307,6 +1307,58 @@ export function MonthStepper({
 /* ================================================================
    AppHeader - Header 1 (Command bar) with Real Router Links & Better Auth
    ================================================================ */
+const LOADING_QUIPS = [
+  "Splitting the delivery fee to the last rupiah...",
+  "Calculating who ordered the extra nasi...",
+  "Summoning the lunch raid boss...",
+  "Rounding up for the tip jar...",
+  "Tracking down unpaid squadmates...",
+  "Negotiating with the promo voucher...",
+  "Charging up the HP bar...",
+  "Checking who holds #1 on the Tip Rank...",
+  "Polishing the receipt for OCR...",
+  "Assigning leftover Rp1 to the rounding hero...",
+  "Counting change in the office tip jar...",
+  "Preparing your lunch dossier...",
+]
+
+export function PageLoading({ label = "Loading..." }: { label?: string }) {
+  const { branding } = useAppStore()
+  const [quipIndex, setQuipIndex] = useState(0)
+
+  useEffect(() => {
+    setQuipIndex(Math.floor(Math.random() * LOADING_QUIPS.length))
+    const timer = window.setInterval(() => {
+      setQuipIndex((prev) => (prev + 1) % LOADING_QUIPS.length)
+    }, 2200)
+    return () => window.clearInterval(timer)
+  }, [])
+
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-4 text-center"
+    >
+      <div className="flex h-24 w-24 items-center justify-center rounded-lg border-2 border-[var(--rt-accent)] bg-[var(--rt-surface)] p-3 shadow-lg">
+        <img
+          src={branding.iconUrl}
+          alt={label}
+          width={72}
+          height={72}
+          className="h-18 w-18 animate-pulse rounded object-cover"
+        />
+      </div>
+      <div className="space-y-1">
+        <p className="font-arcade-mono text-[15px] font-bold text-[var(--rt-ink)] sm:text-[16px]">
+          {LOADING_QUIPS[quipIndex]}
+        </p>
+        <p className="text-[13px] text-[var(--rt-muted)]">{label}</p>
+      </div>
+    </div>
+  )
+}
+
 export function AppHeader({
   themePref,
   onThemePrefChange,
@@ -1326,11 +1378,16 @@ export function AppHeader({
   const [themeMenuOpen, setThemeMenuOpen] = useState(false)
   const [accountMenuOpen, setAccountMenuOpen] = useState(false)
 
+  const isHome = pathname === "/"
+  const isBills = pathname.startsWith("/bills") || pathname.startsWith("/b/")
+  const isRanks = pathname.startsWith("/ranks")
+  const isAdminRoute = pathname.startsWith("/admin")
+
   const linkedPlayer = me.linkedPlayerId
     ? (players.find((p) => p.id === me.linkedPlayerId) ?? null)
     : null
   const isViewingOther = Boolean(
-    me.linkedPlayerId && you && you.id !== me.linkedPlayerId
+    isHome && me.linkedPlayerId && you && you.id !== me.linkedPlayerId
   )
   const sortedNavPlayers = [...players].sort((a, b) => {
     const unpaidDiff = getPlayerUnpaidTotal(b) - getPlayerUnpaidTotal(a)
@@ -1339,11 +1396,6 @@ export function AppHeader({
     if (countDiff !== 0) return countDiff
     return a.name.localeCompare(b.name)
   })
-
-  const isHome = pathname === "/"
-  const isBills = pathname.startsWith("/bills") || pathname.startsWith("/b/")
-  const isRanks = pathname.startsWith("/ranks")
-  const isAdminRoute = pathname.startsWith("/admin")
 
   return (
     <header className="sticky top-0 z-30 border-b-2 border-[var(--rt-border)] bg-[var(--rt-topbar-bg)] text-[var(--rt-topbar-ink)]">
@@ -1563,8 +1615,8 @@ export function AppHeader({
                   </p>
                 </div>
 
-                {/* Viewing as callsign switcher inside the account menu */}
-                {you && sortedNavPlayers.length > 0 && (
+                {/* Viewing as callsign switcher inside the account menu (Home only) */}
+                {isHome && you && sortedNavPlayers.length > 0 && (
                   <div className="border-b border-[var(--rt-border-soft)] px-1.5 py-2.5">
                     <div className="mb-1.5 flex items-center justify-between gap-2">
                       <span className="text-[11px] font-bold tracking-wide text-[var(--rt-muted)] uppercase">
