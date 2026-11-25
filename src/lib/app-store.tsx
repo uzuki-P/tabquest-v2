@@ -1069,6 +1069,10 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   )
 }
 
+export function useOptionalAppStore(): AppStoreValue | null {
+  return useContext(AppStoreContext)
+}
+
 export function useAppStore(): AppStoreValue {
   const ctx = useContext(AppStoreContext)
   if (!ctx) {

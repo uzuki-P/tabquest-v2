@@ -72,8 +72,9 @@ import type {
   PlayerSummary,
   tierForSpend,
 } from "@/domain/types"
-import { useAppStore } from "@/lib/app-store"
+import { useAppStore, useOptionalAppStore } from "@/lib/app-store"
 import type { HitEvent, ThemePreference } from "@/lib/app-store"
+import { DEFAULT_BRANDING } from "@/lib/branding"
 import { todayJakarta } from "@/lib/time"
 
 const MONTH_NAMES = [
@@ -1426,7 +1427,8 @@ const LOADING_QUIPS = [
 ]
 
 export function PageLoading({ label = "Loading..." }: { label?: string }) {
-  const { branding } = useAppStore()
+  const store = useOptionalAppStore()
+  const iconUrl = store?.branding.iconUrl ?? DEFAULT_BRANDING.iconUrl
   const [quipIndex, setQuipIndex] = useState(0)
 
   useEffect(() => {
@@ -1445,7 +1447,7 @@ export function PageLoading({ label = "Loading..." }: { label?: string }) {
     >
       <div className="flex h-24 w-24 items-center justify-center rounded-lg border-2 border-[var(--rt-accent)] bg-[var(--rt-surface)] p-3 shadow-lg">
         <img
-          src={branding.iconUrl}
+          src={iconUrl}
           alt={label}
           width={72}
           height={72}
