@@ -853,6 +853,7 @@ function AdminNewBillPage() {
                     onChange={setCensorBoxes}
                     crop={receiptCrop}
                     onCropChange={setReceiptCrop}
+                    onPickFile={handleImagePickOnly}
                   />
                 </section>
 
