@@ -84,6 +84,7 @@ interface AppStoreValue {
 
   // Auth & user state
   authPending: boolean
+  authLoading: boolean
   me: MeResponse
   role: AppUserRole
   activePlayerId: string
@@ -209,6 +210,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   const { data: betterAuthSession, isPending: authPending } = useSession()
 
   const [loading, setLoading] = useState<boolean>(true)
+  const [meLoaded, setMeLoaded] = useState<boolean>(false)
   const [players, setPlayers] = useState<PlayerSummary[]>([])
   const [bills, setBills] = useState<BillSummary[]>([])
   const [unpaidBills, setUnpaidBills] = useState<BillSummary[]>([])
@@ -361,6 +363,8 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       console.error("Failed to load /api/me:", err)
       setMe(EMPTY_ME)
+    } finally {
+      setMeLoaded(true)
     }
   }, [])
 
@@ -992,6 +996,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         setSelectedMonth,
         branding,
         authPending,
+        authLoading: authPending || !meLoaded,
         me,
         role,
         activePlayerId: you?.id ?? "",

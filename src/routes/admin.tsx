@@ -51,8 +51,15 @@ function getTabIndex(pathname: string): number {
 
 function AdminLayoutRoute() {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
-  const { role, me, authPending, handleSignIn, players, setDrawerOpen } =
-    useAppStore()
+  const {
+    role,
+    me,
+    authPending,
+    authLoading,
+    handleSignIn,
+    players,
+    setDrawerOpen,
+  } = useAppStore()
 
   const activeIdx = getTabIndex(pathname)
   const prevIdxRef = useRef(activeIdx)
@@ -85,6 +92,22 @@ function AdminLayoutRoute() {
   const pendingCount = players.filter(
     (p) => p.unpaidBills.length > 0 && p.pendingClaim !== null
   ).length
+
+  if (authLoading) {
+    return (
+      <section className="mx-auto max-w-xl rounded border-2 border-[var(--rt-border)] bg-[var(--rt-surface)] p-8 text-center">
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded border-2 border-[var(--rt-ui-border)] bg-[var(--rt-surface-alt)] text-[var(--rt-muted)]">
+          <ShieldCheck size={24} weight="bold" className="animate-pulse" />
+        </div>
+        <p className="rt2-display mt-4 text-3xl font-extrabold">
+          Checking admin session...
+        </p>
+        <p className="mt-1.5 text-[14px] text-[var(--rt-muted)]">
+          Verifying your sign-in status.
+        </p>
+      </section>
+    )
+  }
 
   if (role !== "admin") {
     return (
