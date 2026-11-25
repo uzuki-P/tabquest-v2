@@ -111,9 +111,9 @@ interface AppStoreValue {
   preview: boolean
   setPreview: (active: boolean) => void
   hit: HitEvent | null
-  toast: { key: number; message: string } | null
+  toast: { key: number; message: string; tone: "default" | "error" } | null
   liveAnnouncement: string
-  pushToast: (message: string) => void
+  pushToast: (message: string, tone?: "default" | "error") => void
 
   // Refreshers
   refreshWorkspace: (monthOverride?: string) => Promise<void>
@@ -240,18 +240,23 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     null
   )
   const [liveAnnouncement, setLiveAnnouncement] = useState<string>("")
-  const [toast, setToast] = useState<{ key: number; message: string } | null>(
-    null
-  )
+  const [toast, setToast] = useState<{
+    key: number
+    message: string
+    tone: "default" | "error"
+  } | null>(null)
 
-  const pushToast = useCallback((message: string) => {
-    setLiveAnnouncement(message)
-    const key = Date.now()
-    setToast({ key, message })
-    window.setTimeout(() => {
-      setToast((curr) => (curr?.key === key ? null : curr))
-    }, 3400)
-  }, [])
+  const pushToast = useCallback(
+    (message: string, tone: "default" | "error" = "default") => {
+      setLiveAnnouncement(message)
+      const key = Date.now()
+      setToast({ key, message, tone })
+      window.setTimeout(() => {
+        setToast((curr) => (curr?.key === key ? null : curr))
+      }, tone === "error" ? 5000 : 3400)
+    },
+    []
+  )
 
   const role: AppUserRole = me.authenticated
     ? me.isAdmin
@@ -518,7 +523,8 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         return true
       } catch (err) {
         pushToast(
-          err instanceof Error ? err.message : "Failed to confirm payment."
+          err instanceof Error ? err.message : "Failed to confirm payment.",
+          "error"
         )
         return false
       }
@@ -541,7 +547,8 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         return true
       } catch (err) {
         pushToast(
-          err instanceof Error ? err.message : "Failed to dismiss claim."
+          err instanceof Error ? err.message : "Failed to dismiss claim.",
+          "error"
         )
         return false
       }

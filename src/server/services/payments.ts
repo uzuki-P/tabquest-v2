@@ -183,7 +183,6 @@ export async function collectAllForPlayer(
     db
       .select({
         billPlayerId: billPlayers.id,
-        billId: bills.id,
         orderDate: bills.orderDate,
         shareAmount: billPlayers.shareAmount,
       })

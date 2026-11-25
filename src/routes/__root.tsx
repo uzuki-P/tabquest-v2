@@ -150,10 +150,20 @@ function AppShell() {
       {toast && (
         <div
           key={toast.key}
-          role="status"
-          className="rt2-toast-in rt2-chamfer-frame fixed right-4 bottom-4 z-50 max-w-sm bg-[var(--rt-teal)] shadow-2xl"
+          role={toast.tone === "error" ? "alert" : "status"}
+          className={`rt2-toast-in rt2-chamfer-frame fixed right-4 bottom-4 z-[100] max-w-sm shadow-2xl ${
+            toast.tone === "error"
+              ? "bg-[var(--rt-accent)]"
+              : "bg-[var(--rt-teal)]"
+          }`}
         >
-          <div className="rt2-chamfer-inner bg-[var(--rt-tip-bg)] px-4 py-3 text-[15px] font-bold text-[var(--rt-tip-ink)]">
+          <div
+            className={`rt2-chamfer-inner px-4 py-3 text-[15px] font-bold ${
+              toast.tone === "error"
+                ? "bg-[var(--rt-accent-soft)] text-[var(--rt-accent-ink)]"
+                : "bg-[var(--rt-tip-bg)] text-[var(--rt-tip-ink)]"
+            }`}
+          >
             {toast.message}
           </div>
         </div>
