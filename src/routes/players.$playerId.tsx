@@ -998,7 +998,7 @@ function PlayerDetailRoute() {
           {/* 4. Top Merchants & Repeat Orders (compact two-column card) */}
           <div className="grid gap-5 md:grid-cols-2">
             {/* Where it goes */}
-            <div className="rounded border-2 border-[var(--rt-border)] bg-[var(--rt-surface)] p-4 sm:p-5">
+            <div className="min-w-0 rounded border-2 border-[var(--rt-border)] bg-[var(--rt-surface)] p-4 sm:p-5">
               <div className="flex items-baseline justify-between gap-2">
                 <h2 className="rt2-display text-2xl font-extrabold">
                   Where it goes
@@ -1081,7 +1081,7 @@ function PlayerDetailRoute() {
             </div>
 
             {/* Repeat spots (ranked by order frequency) */}
-            <div className="rounded border-2 border-[var(--rt-border)] bg-[var(--rt-surface)] p-4 sm:p-5">
+            <div className="min-w-0 rounded border-2 border-[var(--rt-border)] bg-[var(--rt-surface)] p-4 sm:p-5">
               <div className="flex items-baseline justify-between gap-2">
                 <h2 className="rt2-display text-2xl font-extrabold">
                   The usual spots
