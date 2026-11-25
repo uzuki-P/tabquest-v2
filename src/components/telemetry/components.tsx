@@ -9,7 +9,6 @@ import {
   Crown,
   Heart,
   Lightning,
-  LockSimple,
   Monitor,
   Moon,
   Percent,
@@ -29,6 +28,8 @@ import { useEffect, useId, useRef, useState } from "react"
 import {
   Dialog,
   DialogClose,
+  DialogContent,
+  DialogDescription,
   DialogTitle,
   SheetContent,
 } from "@/components/ui/dialog"
@@ -791,13 +792,14 @@ export function PayAllCard({
   onNotify: (player: PlayerSummary, amount: number) => void | Promise<boolean>
   onPreviewChange: (active: boolean) => void
 }) {
-  const { paymentMethods, me } = useAppStore()
+  const { paymentMethods, me, signingIn } = useAppStore()
   const owed = getPlayerUnpaidTotal(player)
   const roundOptions = getRoundUpOptions(owed)
   const [selectedAmount, setSelectedAmount] = useState<number>(owed)
   const [copiedDigits, setCopiedDigits] = useState(false)
   const [copiedMethodId, setCopiedMethodId] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [reportOpen, setReportOpen] = useState(false)
   const claim = player.pendingClaim
   const isLinkedSelf = me.authenticated && me.linkedPlayerId === player.id
 
@@ -823,9 +825,9 @@ export function PayAllCard({
     }
   }
 
-  const handleCopy = () => {
+  const handleCopy = (amount: number = selectedAmount) => {
     if (typeof navigator !== "undefined" && navigator.clipboard) {
-      void navigator.clipboard.writeText(String(selectedAmount))
+      void navigator.clipboard.writeText(String(amount))
     }
     setCopiedDigits(true)
     setTimeout(() => setCopiedDigits(false), 1600)
@@ -856,7 +858,8 @@ export function PayAllCard({
     onPreviewChange(false)
     setSubmitting(true)
     try {
-      await onNotify(player, selectedAmount)
+      const ok = await onNotify(player, selectedAmount)
+      if (ok !== false) setReportOpen(false)
     } finally {
       setSubmitting(false)
     }
@@ -892,227 +895,31 @@ export function PayAllCard({
             {formatRupiah(owed)}
           </p>
 
-          <div className="space-y-1.5" role="group" aria-label="Quick amounts">
-            {roundOptions.map((opt) => {
-              const chosen = selectedAmount === opt.amount
-              return (
-                <button
-                  key={opt.amount}
-                  type="button"
-                  aria-pressed={chosen}
-                  onClick={() => handleChipToggle(opt.amount)}
-                  className={`rt2-focus flex min-h-[44px] w-full cursor-pointer items-center justify-between rounded border-2 px-3 py-2 text-[15px] transition ${
-                    chosen
-                      ? "border-[var(--rt-ink)] bg-[var(--rt-ink)] font-bold text-[var(--rt-surface)]"
-                      : "rt2-btn-secondary"
-                  }`}
-                >
-                  <span>{opt.label}</span>
-                  <span className="tnum font-arcade-mono text-[17px]">
-                    {formatRupiah(opt.amount)}
-                    {opt.tip > 0 && (
-                      <span
-                        className={`ml-1.5 text-[14px] ${
-                          chosen ? "text-[#5CE6DD]" : "text-[var(--rt-teal-ink)]"
-                        }`}
-                      >
-                        +{formatRupiah(opt.tip)}
-                      </span>
-                    )}
-                  </span>
-                </button>
-              )
-            })}
-          </div>
-
-          <div>
-            <CurrencyInput
-              label="Custom amount"
-              value={selectedAmount}
-              onChange={setSelectedAmount}
-              onEnter={triggerNotify}
-            />
-            {underpay > 0 && (
-              <p className="mt-1.5 flex items-center gap-1.5 text-[14px] font-semibold text-[var(--rt-accent-ink)]">
-                <Warning size={16} weight="bold" className="shrink-0" />
-                Below your split by {formatRupiah(underpay)}. Notify will report
-                an underpay.
-              </p>
-            )}
-          </div>
-
-          <div className="rounded border-2 border-[var(--rt-ui-border)] bg-[var(--rt-bg)] p-3.5">
-            <div className="flex items-baseline justify-between gap-2">
-              <span className="text-[15px] font-bold">Tip rank</span>
-              <span
-                key={`${projection.projectedRank}-${selectedTip}`}
-                className="rt2-rank-jump tnum font-arcade-mono text-[17px] font-bold text-[var(--rt-teal-ink)]"
-              >
-                {selectedTip === 0
-                  ? `#${projection.currentRank} (no change)`
-                  : `#${projection.currentRank} to #${projection.projectedRank}`}
-              </span>
-            </div>
-            <p className="mt-0.5 text-[14px] text-[var(--rt-muted)]">
-              {projection.overtakes.length > 0
-                ? `Passes ${projection.overtakes.join(" and ")}`
-                : targets.currentRank === 1
-                  ? "You hold #1 on the Tip Rank"
-                  : selectedTip > 0
-                    ? `Adds +${formatRupiah(selectedTip)} tip`
-                    : "Pick a target below or enter a custom amount"}
-            </p>
-
-            {targets.currentRank === 1 ? (
-              <p className="mt-2.5 flex items-center gap-1.5 text-[15px] font-bold text-[var(--rt-teal-ink)]">
-                <Crown size={18} weight="fill" />
-                You hold #1
-              </p>
-            ) : (
-              <div className="mt-3 space-y-2 border-t border-[var(--rt-border-soft)] pt-3">
-                {targets.toNext !== null && targets.nextRank !== null && (
-                  <button
-                    type="button"
-                    aria-pressed={selectedAmount === owed + targets.toNext}
-                    onClick={() => handleChipToggle(owed + targets.toNext!)}
-                    className={`rt2-focus flex min-h-[48px] w-full cursor-pointer items-center justify-between gap-2 rounded border-2 px-3 py-2 text-left text-[15px] font-bold transition ${
-                      selectedAmount === owed + targets.toNext
-                        ? "border-[var(--rt-ink)] bg-[var(--rt-ink)] text-[var(--rt-surface)]"
-                        : "rt2-btn-secondary"
-                    }`}
-                  >
-                    <span className="flex items-center gap-1.5">
-                      {selectedAmount === owed + targets.toNext && (
-                        <Check size={16} weight="bold" />
-                      )}
-                      Take next rank (#{targets.nextRank} {targets.nextName})
-                    </span>
-                    <span className="tnum shrink-0 font-arcade-mono text-[16px]">
-                      +{formatRupiah(targets.toNext)}
-                    </span>
-                  </button>
-                )}
-
-                {targets.toFirst !== null && (
-                  <button
-                    type="button"
-                    aria-pressed={selectedAmount === owed + targets.toFirst}
-                    onClick={() => handleChipToggle(owed + targets.toFirst!)}
-                    className={`rt2-focus flex min-h-[48px] w-full cursor-pointer items-center justify-between gap-2 rounded border-2 px-3 py-2 text-left text-[15px] font-bold transition ${
-                      selectedAmount === owed + targets.toFirst
-                        ? "border-[var(--rt-ink)] bg-[var(--rt-ink)] text-[var(--rt-surface)]"
-                        : "rt2-btn-secondary"
-                    }`}
-                  >
-                    <span className="flex items-center gap-1.5">
-                      {selectedAmount === owed + targets.toFirst ? (
-                        <Check size={16} weight="bold" />
-                      ) : (
-                        <Crown size={16} weight="fill" className="text-[var(--rt-amber-ink)]" />
-                      )}
-                      Take #1 ({targets.firstName})
-                    </span>
-                    <span className="tnum shrink-0 font-arcade-mono text-[16px]">
-                      +{formatRupiah(targets.toFirst)}
-                    </span>
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-
-          {role === "guest" ? (
-            <div className="space-y-3">
-              <button
-                type="button"
-                onClick={handleCopy}
-                className={`rt2-focus rt2-btn-secondary relative flex min-h-[48px] w-full items-center justify-center gap-2 rounded px-4 font-arcade-mono text-[16px] font-bold ${
-                  copiedDigits ? "rt2-pop border-[var(--rt-teal)] text-[var(--rt-teal-ink)]" : ""
-                }`}
-              >
-                {copiedDigits && (
-                  <span
-                    aria-hidden
-                    className="rt2-copied-pop pointer-events-none absolute -top-2 left-1/2 rounded bg-[var(--rt-teal)] px-2 py-0.5 text-[13px] font-bold whitespace-nowrap text-white"
-                  >
-                    Copied!
-                  </span>
-                )}
-                {copiedDigits ? <Check size={17} weight="bold" /> : <Copy size={17} />}
-                {copiedDigits ? `Copied ${selectedAmount}` : `Copy ${selectedAmount}`}
-              </button>
-
-              <div className="rounded border-2 border-dashed border-[var(--rt-ui-border)] bg-[var(--rt-bg)] p-4 text-[15px]">
-                <div className="flex items-start gap-2.5">
-                  <LockSimple size={20} weight="fill" className="mt-0.5 shrink-0 text-[var(--rt-accent-ink)]" />
-                  <div>
-                    <p className="font-semibold">
-                      Sign in to see where to transfer and notify admin
-                    </p>
-                    <button
-                      type="button"
-                      onClick={onSignIn}
-                      className="rt2-focus rt2-btn-primary mt-2.5 inline-flex min-h-[44px] items-center gap-1.5 rounded px-4 py-2 text-[14px] font-bold"
-                    >
-                      <SignIn size={16} weight="bold" />
-                      Sign in
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : (
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-2.5">
                 <button
                   type="button"
-                  onClick={handleCopy}
+                  onClick={() => handleCopy(owed)}
                   className={`rt2-focus rt2-btn-secondary relative flex min-h-[48px] items-center justify-center gap-1.5 rounded px-3 font-arcade-mono text-[15px] font-bold ${
                     copiedDigits ? "rt2-pop border-[var(--rt-teal)] text-[var(--rt-teal-ink)]" : ""
                   }`}
                 >
-                  {copiedDigits && (
-                    <span
-                      aria-hidden
-                      className="rt2-copied-pop pointer-events-none absolute -top-2 left-1/2 rounded bg-[var(--rt-teal)] px-2 py-0.5 text-[13px] font-bold whitespace-nowrap text-white"
-                    >
-                      Copied!
-                    </span>
-                  )}
                   {copiedDigits ? <Check size={16} weight="bold" /> : <Copy size={16} />}
-                  {copiedDigits ? "Copied" : `Copy ${selectedAmount}`}
+                  {copiedDigits ? "Copied" : `Copy ${owed}`}
                 </button>
-
-                {claim ? (
-                  <div className="flex min-h-[48px] items-center justify-center gap-1.5 rounded border-2 border-[var(--rt-border)] bg-[var(--rt-amber-bg)] px-3 text-[14px] font-bold text-[#12161B]">
-                    <Clock size={16} weight="bold" />
-                    Reported
-                  </div>
-                ) : isLinkedSelf ? (
-                  <button
-                    type="button"
-                    disabled={selectedAmount <= 0 || submitting}
-                    onClick={() => void triggerNotify()}
-                    onMouseEnter={() => onPreviewChange(true)}
-                    onMouseLeave={() => onPreviewChange(false)}
-                    onFocus={() => onPreviewChange(true)}
-                    onBlur={() => onPreviewChange(false)}
-                    className="rt2-focus rt2-btn-primary min-h-[48px] rounded px-3 font-arcade-mono text-[15px] font-bold"
-                  >
-                    {submitting
-                      ? "Sending..."
-                      : `Notify ${formatRupiah(selectedAmount)}`}
-                  </button>
-                ) : (
-                  <div
-                    title="Only the linked account for this player can submit a transfer claim"
-                    className="flex min-h-[48px] items-center justify-center rounded border-2 border-dashed border-[var(--rt-ui-border)] bg-[var(--rt-bg)] px-2.5 text-center text-[12px] font-bold text-[var(--rt-muted)]"
-                  >
-                    {me.linkedPlayerId
-                      ? "Viewing another player"
-                      : "Account not linked"}
-                  </div>
-                )}
+                <button
+                  type="button"
+                  onClick={() => setReportOpen(true)}
+                  onMouseEnter={() => !claim && onPreviewChange(true)}
+                  onMouseLeave={() => onPreviewChange(false)}
+                  onFocus={() => !claim && onPreviewChange(true)}
+                  onBlur={() => onPreviewChange(false)}
+                  className={`rt2-focus min-h-[48px] rounded px-3 text-[15px] font-bold ${
+                    claim ? "rt2-btn-secondary" : "rt2-btn-primary"
+                  }`}
+                >
+                  {claim ? "View details" : "Pay & report"}
+                </button>
               </div>
 
               {claim && (
@@ -1122,45 +929,291 @@ export function PayAllCard({
                 </p>
               )}
 
-              <div className="space-y-2">
-                <p className="text-[13px] font-bold text-[var(--rt-muted)]">
-                  Transfer destinations ({paymentMethods.length})
-                </p>
-                {paymentMethods.map((m) => {
-                  const isCopied = copiedMethodId === m.id
+              <p className="flex items-center gap-1.5 text-[14px] font-semibold text-[var(--rt-muted)]">
+                <Crown size={16} weight="fill" className="shrink-0 text-[var(--rt-amber-ink)]" />
+                {targets.currentRank === 1 || targets.toFirst === null ? (
+                  "You hold #1 on the Tip Rank"
+                ) : (
+                  <span>
+                    Tip{" "}
+                    <span className="tnum font-arcade-mono font-bold text-[var(--rt-ink)]">
+                      +{formatRupiah(targets.toFirst)}
+                    </span>{" "}
+                    to beat #1 ({targets.firstName})
+                  </span>
+                )}
+              </p>
+
+              {paymentMethods.length > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-[13px] font-bold text-[var(--rt-muted)]">
+                    Transfer to ({paymentMethods.length})
+                  </p>
+                  {paymentMethods.map((m) => {
+                    const isCopied = copiedMethodId === m.id
+                    return (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => handleCopyAccount(m.id, m.accountNumber)}
+                        className={`rt2-focus rt2-btn-secondary flex w-full items-start justify-between gap-2 rounded px-2.5 py-2 text-left ${
+                          isCopied ? "border-[var(--rt-teal)]" : ""
+                        }`}
+                      >
+                        <span className="min-w-0">
+                          <span className="block text-[13px] font-bold">
+                            {m.label}
+                            {m.isPrimary ? " (Primary)" : ""}
+                          </span>
+                          <span className="tnum block font-arcade-mono text-[16px] font-bold">
+                            {m.accountNumber}
+                          </span>
+                          <span className="block text-[12px] break-words text-[var(--rt-muted)]">
+                            {m.accountHolder}
+                            {m.note ? ` · ${m.note}` : ""}
+                          </span>
+                        </span>
+                        {isCopied ? (
+                          <Check size={16} weight="bold" className="mt-0.5 shrink-0 text-[var(--rt-teal-ink)]" />
+                        ) : (
+                          <Copy size={16} className="mt-0.5 shrink-0 text-[var(--rt-teal-ink)]" />
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          
+        </div>
+      )}
+
+      <Dialog
+        open={reportOpen}
+        onOpenChange={(next) => !submitting && setReportOpen(next)}
+      >
+        <DialogContent className="max-h-[92dvh] gap-3 overflow-y-auto p-4 sm:max-w-2xl">
+          <div className="flex items-baseline justify-between gap-3">
+            <DialogTitle className="rt2-display text-xl font-extrabold">
+              Pay &amp; report
+            </DialogTitle>
+            <DialogDescription className="truncate text-[13px] text-[var(--rt-muted)]">
+              {player.name} owes {formatRupiah(owed)}
+            </DialogDescription>
+          </div>
+
+          <div className="space-y-3">
+              <div
+                className="grid grid-cols-3 gap-1.5"
+                role="group"
+                aria-label="Quick amounts"
+              >
+                {roundOptions.map((opt) => {
+                  const chosen = selectedAmount === opt.amount
                   return (
                     <button
-                      key={m.id}
+                      key={opt.amount}
                       type="button"
-                      onClick={() => handleCopyAccount(m.id, m.accountNumber)}
-                      className={`rt2-focus rt2-btn-secondary w-full rounded p-3 text-left ${
-                        isCopied ? "border-[var(--rt-teal)]" : ""
+                      aria-pressed={chosen}
+                      onClick={() => handleChipToggle(opt.amount)}
+                      className={`rt2-focus flex cursor-pointer flex-col items-start rounded border-2 px-2 py-1.5 text-left transition ${
+                        chosen
+                          ? "border-[var(--rt-ink)] bg-[var(--rt-ink)] text-[var(--rt-surface)]"
+                          : "rt2-btn-secondary"
                       }`}
                     >
-                      <div className="flex items-center justify-between gap-2 text-[13px] text-[var(--rt-muted)]">
-                        <span className="font-bold text-[var(--rt-ink)]">
-                          {m.label}
-                          {m.isPrimary ? " (Primary)" : ""}
+                      <span className="text-[12px] font-bold opacity-80">
+                        {opt.label}
+                      </span>
+                      <span className="tnum font-arcade-mono text-[14px] font-bold">
+                        {formatRupiah(opt.amount)}
+                      </span>
+                      {opt.tip > 0 && (
+                        <span
+                          className={`tnum font-arcade-mono text-[11px] ${
+                            chosen ? "text-[#5CE6DD]" : "text-[var(--rt-teal-ink)]"
+                          }`}
+                        >
+                          +{formatRupiah(opt.tip)}
                         </span>
-                        <span className="font-arcade-mono font-bold text-[var(--rt-teal-ink)]">
-                          {isCopied ? "Copied!" : "Copy number"}
-                        </span>
-                      </div>
-                      <p className="tnum mt-1 font-arcade-mono text-[16px] font-bold">
-                        {m.accountNumber}
-                      </p>
-                      <p className="text-[13px] text-[var(--rt-muted)]">
-                        {m.accountHolder}
-                        {m.note ? ` · ${m.note}` : ""}
-                      </p>
+                      )}
                     </button>
                   )
                 })}
               </div>
-            </div>
-          )}
-        </div>
-      )}
+
+              <div>
+                <CurrencyInput
+                  label="Custom amount"
+                  value={selectedAmount}
+                  onChange={setSelectedAmount}
+                  onEnter={triggerNotify}
+                />
+                {underpay > 0 && (
+                  <p className="mt-1 flex items-center gap-1.5 text-[13px] font-semibold text-[var(--rt-accent-ink)]">
+                    <Warning size={15} weight="bold" className="shrink-0" />
+                    Below your split by {formatRupiah(underpay)}. Notify will
+                    report an underpay.
+                  </p>
+                )}
+              </div>
+          </div>
+
+              <div className="rounded border-2 border-[var(--rt-ui-border)] bg-[var(--rt-bg)] p-2.5">
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="text-[13px] font-bold">Tip rank</span>
+                  <span
+                    key={`${projection.projectedRank}-${selectedTip}`}
+                    className="rt2-rank-jump tnum font-arcade-mono text-[14px] font-bold text-[var(--rt-teal-ink)]"
+                  >
+                    {selectedTip === 0
+                      ? `#${projection.currentRank} (no change)`
+                      : `#${projection.currentRank} to #${projection.projectedRank}`}
+                  </span>
+                </div>
+                <p className="text-[12px] text-[var(--rt-muted)]">
+                  {projection.overtakes.length > 0
+                    ? `Passes ${projection.overtakes.join(" and ")}`
+                    : targets.currentRank === 1
+                      ? "You hold #1 on the Tip Rank"
+                      : selectedTip > 0
+                        ? `Adds +${formatRupiah(selectedTip)} tip`
+                        : "Pick a target or enter a custom amount"}
+                </p>
+                {targets.currentRank !== 1 &&
+                  (targets.toNext !== null || targets.toFirst !== null) && (
+                    <div className="mt-2 grid grid-cols-2 gap-1.5">
+                      {targets.toNext !== null && targets.nextRank !== null && (
+                        <button
+                          type="button"
+                          aria-pressed={selectedAmount === owed + targets.toNext}
+                          onClick={() => handleChipToggle(owed + targets.toNext!)}
+                          className={`rt2-focus flex cursor-pointer flex-col items-start rounded border-2 px-2 py-1.5 text-left transition ${
+                            selectedAmount === owed + targets.toNext
+                              ? "border-[var(--rt-ink)] bg-[var(--rt-ink)] text-[var(--rt-surface)]"
+                              : "rt2-btn-secondary"
+                          }`}
+                        >
+                          <span className="w-full truncate text-[12px] font-bold">
+                            Next #{targets.nextRank} {targets.nextName}
+                          </span>
+                          <span className="tnum font-arcade-mono text-[13px] font-bold">
+                            +{formatRupiah(targets.toNext)}
+                          </span>
+                        </button>
+                      )}
+                      {targets.toFirst !== null && (
+                        <button
+                          type="button"
+                          aria-pressed={selectedAmount === owed + targets.toFirst}
+                          onClick={() => handleChipToggle(owed + targets.toFirst!)}
+                          className={`rt2-focus flex cursor-pointer flex-col items-start rounded border-2 px-2 py-1.5 text-left transition ${
+                            selectedAmount === owed + targets.toFirst
+                              ? "border-[var(--rt-ink)] bg-[var(--rt-ink)] text-[var(--rt-surface)]"
+                              : "rt2-btn-secondary"
+                          }`}
+                        >
+                          <span className="flex w-full items-center gap-1 truncate text-[12px] font-bold">
+                            <Crown size={13} weight="fill" className="shrink-0 text-[var(--rt-amber-ink)]" />
+                            <span className="truncate">#1 {targets.firstName}</span>
+                          </span>
+                          <span className="tnum font-arcade-mono text-[13px] font-bold">
+                            +{formatRupiah(targets.toFirst)}
+                          </span>
+                        </button>
+                      )}
+                    </div>
+                  )}
+              </div>
+
+              {paymentMethods.length > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-[13px] font-bold text-[var(--rt-muted)]">
+                    Transfer to ({paymentMethods.length})
+                  </p>
+                  <div className="grid gap-1.5 sm:grid-cols-2">
+                  {paymentMethods.map((m) => {
+                    const isCopied = copiedMethodId === m.id
+                    return (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => handleCopyAccount(m.id, m.accountNumber)}
+                        className={`rt2-focus rt2-btn-secondary flex w-full items-start justify-between gap-2 rounded px-2.5 py-2 text-left ${
+                          isCopied ? "border-[var(--rt-teal)]" : ""
+                        }`}
+                      >
+                        <span className="min-w-0">
+                          <span className="block text-[13px] font-bold">
+                            {m.label}
+                            {m.isPrimary ? " (Primary)" : ""}
+                          </span>
+                          <span className="tnum block font-arcade-mono text-[16px] font-bold">
+                            {m.accountNumber}
+                          </span>
+                          <span className="block text-[12px] break-words text-[var(--rt-muted)]">
+                            {m.accountHolder}
+                            {m.note ? ` · ${m.note}` : ""}
+                          </span>
+                        </span>
+                        {isCopied ? (
+                          <Check size={16} weight="bold" className="mt-0.5 shrink-0 text-[var(--rt-teal-ink)]" />
+                        ) : (
+                          <Copy size={16} className="mt-0.5 shrink-0 text-[var(--rt-teal-ink)]" />
+                        )}
+                      </button>
+                    )
+                  })}
+                  </div>
+                </div>
+              )}
+
+          <div className="grid grid-cols-2 gap-2.5">
+            <button
+              type="button"
+              onClick={() => handleCopy(selectedAmount)}
+              className={`rt2-focus rt2-btn-secondary relative flex min-h-[44px] items-center justify-center gap-1.5 rounded px-3 font-arcade-mono text-[14px] font-bold ${
+                copiedDigits ? "rt2-pop border-[var(--rt-teal)] text-[var(--rt-teal-ink)]" : ""
+              }`}
+            >
+              {copiedDigits ? <Check size={16} weight="bold" /> : <Copy size={16} />}
+              {copiedDigits ? "Copied" : `Copy ${selectedAmount}`}
+            </button>
+            {role === "guest" ? (
+              <button
+                type="button"
+                disabled={signingIn}
+                onClick={onSignIn}
+                className="rt2-focus rt2-btn-primary inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded px-3 text-[14px] font-bold disabled:opacity-70"
+              >
+                <SignIn size={16} weight="bold" className={signingIn ? "animate-pulse" : ""} />
+                {signingIn ? "Signing in..." : "Sign in to notify"}
+              </button>
+            ) : claim ? (
+              <div className="flex min-h-[44px] items-center justify-center gap-1.5 rounded border-2 border-[var(--rt-border)] bg-[var(--rt-amber-bg)] px-3 text-[14px] font-bold text-[#12161B]">
+                <Clock size={16} weight="bold" />
+                Reported
+              </div>
+            ) : isLinkedSelf ? (
+              <button
+                type="button"
+                disabled={selectedAmount <= 0 || submitting}
+                onClick={() => void triggerNotify()}
+                className="rt2-focus rt2-btn-primary min-h-[44px] rounded px-3 font-arcade-mono text-[14px] font-bold"
+              >
+                {submitting ? "Sending..." : `Notify ${formatRupiah(selectedAmount)}`}
+              </button>
+            ) : (
+              <div
+                title="Only the linked account for this player can submit a transfer claim"
+                className="flex min-h-[44px] items-center justify-center rounded border-2 border-dashed border-[var(--rt-ui-border)] bg-[var(--rt-bg)] px-2.5 text-center text-[12px] font-bold text-[var(--rt-muted)]"
+              >
+                {me.linkedPlayerId ? "Viewing another player" : "Account not linked"}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
@@ -1258,23 +1311,17 @@ export function AppHeader({
   themePref,
   onThemePrefChange,
   role,
-  unpaidCount,
-  pendingCount,
-  onOpenAdmin,
   onSignIn,
   onSignOut,
 }: {
   themePref: ThemePreference
   onThemePrefChange: (pref: ThemePreference) => void
   role: AppUserRole
-  unpaidCount: number
-  pendingCount: number
-  onOpenAdmin: () => void
   onSignIn: () => void
   onSignOut: () => void
 }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
-  const { branding, me, players, you, setActivePlayerId, authPending } =
+  const { branding, me, players, you, setActivePlayerId, authPending, signingIn } =
     useAppStore()
   const [themeMenuOpen, setThemeMenuOpen] = useState(false)
   const [accountMenuOpen, setAccountMenuOpen] = useState(false)
@@ -1411,16 +1458,6 @@ export function AppHeader({
             </Select>
           )}
 
-          {role === "admin" && (
-            <button
-              type="button"
-              onClick={onOpenAdmin}
-              className="rt2-focus rt2-btn-primary inline-flex min-h-[40px] items-center gap-1.5 rounded px-3.5 text-[14px] font-bold"
-            >
-              Collect ({unpaidCount} unpaid · {pendingCount} pending)
-            </button>
-          )}
-
           {/* Theme Popover: System / Light / Dark */}
           <Popover open={themeMenuOpen} onOpenChange={setThemeMenuOpen}>
             <PopoverTrigger
@@ -1473,12 +1510,12 @@ export function AppHeader({
           {!me.authenticated ? (
             <button
               type="button"
-              disabled={authPending}
+              disabled={authPending || signingIn}
               onClick={onSignIn}
               className="rt2-focus inline-flex min-h-[40px] cursor-pointer items-center gap-1.5 rounded border border-white/25 bg-white/10 px-3 text-[14px] font-bold hover:bg-white/18 disabled:opacity-60"
             >
               <SignIn size={16} weight="bold" />
-              <span>{authPending ? "..." : "Sign in"}</span>
+              <span>{authPending || signingIn ? "Signing in..." : "Sign in"}</span>
             </button>
           ) : (
             <Popover open={accountMenuOpen} onOpenChange={setAccountMenuOpen}>

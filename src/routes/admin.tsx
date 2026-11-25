@@ -1,10 +1,12 @@
 import {
+  Clock,
   GearSix,
   Plus,
   Receipt,
   ShieldCheck,
   Users,
   Wallet,
+  WarningCircle,
 } from "@phosphor-icons/react"
 import {
   Link,
@@ -55,6 +57,7 @@ function AdminLayoutRoute() {
     role,
     me,
     authPending,
+    signingIn,
     authLoading,
     handleSignIn,
     players,
@@ -89,6 +92,7 @@ function AdminLayoutRoute() {
     return () => ro.disconnect()
   }, [activeIdx, role])
 
+  const unpaidCount = players.filter((p) => p.unpaidBills.length > 0).length
   const pendingCount = players.filter(
     (p) => p.unpaidBills.length > 0 && p.pendingClaim !== null
   ).length
@@ -126,11 +130,11 @@ function AdminLayoutRoute() {
           {!me.authenticated && (
             <button
               type="button"
-              disabled={authPending}
+              disabled={authPending || signingIn}
               onClick={() => void handleSignIn("/admin")}
               className="rt2-focus rt2-btn-primary min-h-[44px] rounded px-5 text-[15px] font-bold"
             >
-              Sign in as Admin
+              {signingIn ? "Signing in..." : "Sign in as Admin"}
             </button>
           )}
           <Link
@@ -195,11 +199,22 @@ function AdminLayoutRoute() {
         >
           <Wallet size={16} weight="bold" />
           Collect all
-          {pendingCount > 0 && (
-            <span className="rounded bg-[var(--rt-accent)] px-1.5 py-0.5 font-arcade-mono text-[12px] font-bold text-[var(--rt-accent-fg)]">
-              {pendingCount}
-            </span>
-          )}
+          <span
+            title={`${unpaidCount} unpaid`}
+            aria-label={`${unpaidCount} unpaid`}
+            className="tnum inline-flex items-center gap-1 text-[14px] leading-none font-bold"
+          >
+            <WarningCircle size={16} weight="bold" />
+            {unpaidCount}
+          </span>
+          <span
+            title={`${pendingCount} pending`}
+            aria-label={`${pendingCount} pending`}
+            className="tnum inline-flex items-center gap-1 text-[14px] leading-none font-bold"
+          >
+            <Clock size={16} weight="bold" />
+            {pendingCount}
+          </span>
         </button>
       </div>
 

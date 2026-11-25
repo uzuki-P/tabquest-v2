@@ -84,6 +84,7 @@ interface AppStoreValue {
 
   // Auth & user state
   authPending: boolean
+  signingIn: boolean
   authLoading: boolean
   me: MeResponse
   role: AppUserRole
@@ -428,14 +429,17 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     [refreshWorkspace]
   )
 
+  const [signingIn, setSigningIn] = useState(false)
   const handleSignIn = useCallback(
     async (callbackURL?: string) => {
       const target =
         callbackURL ??
         (typeof window !== "undefined" ? window.location.pathname : "/")
+      setSigningIn(true)
       try {
         await signInWithShoo(target)
       } catch (err) {
+        setSigningIn(false)
         pushToast(err instanceof Error ? err.message : "Sign-in failed.")
       }
     },
@@ -1003,6 +1007,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         setSelectedMonth,
         branding,
         authPending,
+        signingIn,
         authLoading: authPending || !meLoaded,
         me,
         role,

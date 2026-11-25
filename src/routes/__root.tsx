@@ -9,6 +9,7 @@ import {
 import { useEffect } from "react"
 import type { ReactNode } from "react"
 
+import { DevBadge } from "@/components/DevBadge"
 import {
   AdminCollectDrawer,
   AppHeader,
@@ -136,9 +137,6 @@ function AppShell() {
         themePref={themePref}
         onThemePrefChange={setThemePref}
         role={role}
-        unpaidCount={openDebtors.length}
-        pendingCount={pendingCount}
-        onOpenAdmin={() => setDrawerOpen(true)}
         onSignIn={() => void handleSignIn()}
         onSignOut={() => void handleSignOut()}
       />
@@ -155,6 +153,8 @@ function AppShell() {
           Tabquest {__APP_VERSION__}
         </p>
       </footer>
+
+      <DevBadge />
 
       {toast && (
         <div

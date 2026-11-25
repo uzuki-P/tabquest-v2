@@ -3,6 +3,7 @@ import {
   ArrowCounterClockwise,
   Check,
   Coins,
+  DotsThreeVertical,
   EnvelopeSimple,
   LockSimple,
   LockSimpleOpen,
@@ -15,6 +16,11 @@ import {
 import { createFileRoute } from "@tanstack/react-router"
 import { useState } from "react"
 
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import { AdminShell } from "@/components/admin/AdminShell"
 import { PlayerAvatar, SegmentedTabs } from "@/components/telemetry/components"
 import { useAppStore } from "@/lib/app-store"
@@ -22,6 +28,54 @@ import { useAppStore } from "@/lib/app-store"
 export const Route = createFileRoute("/admin/players")({
   component: AdminPlayersPage,
 })
+
+type ActionItem = {
+  key: string
+  icon: React.ReactNode
+  label: string
+  danger?: boolean
+  onSelect: () => void
+}
+
+function PlayerActionsMenu({
+  label,
+  items,
+}: {
+  label: string
+  items: Array<ActionItem | null>
+}) {
+  const [open, setOpen] = useState(false)
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger
+        aria-label={label}
+        className="rt2-focus rt2-btn-secondary inline-flex min-h-[38px] min-w-[38px] cursor-pointer items-center justify-center rounded"
+      >
+        <DotsThreeVertical size={18} weight="bold" />
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-48 p-1.5">
+        {items.map((item) =>
+          item ? (
+            <button
+              key={item.key}
+              type="button"
+              onClick={() => {
+                setOpen(false)
+                item.onSelect()
+              }}
+              className={`rt2-focus flex min-h-[38px] w-full cursor-pointer items-center gap-2 rounded px-2.5 text-left text-[14px] font-bold hover:bg-white/10 ${
+                item.danger ? "text-[var(--rt-accent-ink)]" : ""
+              }`}
+            >
+              {item.icon}
+              {item.label}
+            </button>
+          ) : null
+        )}
+      </PopoverContent>
+    </Popover>
+  )
+}
 
 function AdminPlayersPage() {
   const {
@@ -307,56 +361,7 @@ function AdminPlayersPage() {
                       </div>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-2">
-                      {p.avatarUrl && (
-                        <button
-                          type="button"
-                          onClick={() => void removePlayerAvatarAdmin(p.id)}
-                          className="rt2-focus rt2-btn-danger inline-flex min-h-[38px] items-center gap-1.5 rounded px-3 text-[13px] font-bold"
-                        >
-                          <Trash size={14} weight="bold" />
-                          Remove avatar
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() =>
-                          void setPlayerAvatarBanned(p.id, !p.avatarBanned)
-                        }
-                        className="rt2-focus rt2-btn-secondary inline-flex min-h-[38px] items-center gap-1.5 rounded px-3 text-[13px] font-bold"
-                      >
-                        <Prohibit size={14} weight="bold" />
-                        {p.avatarBanned ? "Unban avatar" : "Ban avatar"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          void setPlayerNameLocked(p.id, !p.nameLocked)
-                        }
-                        className="rt2-focus rt2-btn-secondary inline-flex min-h-[38px] items-center gap-1.5 rounded px-3 text-[13px] font-bold"
-                      >
-                        {p.nameLocked ? (
-                          <>
-                            <LockSimpleOpen size={14} weight="bold" />
-                            Unlock name
-                          </>
-                        ) : (
-                          <>
-                            <LockSimple size={14} weight="bold" />
-                            Lock name
-                          </>
-                        )}
-                      </button>
-                      {!showArchived && !isRounding && (
-                        <button
-                          type="button"
-                          onClick={() => void setRoundingPlayerId(p.id)}
-                          className="rt2-focus rt2-btn-secondary inline-flex min-h-[38px] items-center gap-1.5 rounded px-3 text-[13px] font-bold"
-                        >
-                          <Coins size={14} weight="bold" />
-                          Set rounding
-                        </button>
-                      )}
+                    <div className="flex items-center gap-2">
                       <button
                         type="button"
                         onClick={() => startEdit(p)}
@@ -365,25 +370,58 @@ function AdminPlayersPage() {
                         <PencilSimple size={14} weight="bold" />
                         Edit
                       </button>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          void toggleArchivePlayer(p.id, !showArchived)
-                        }
-                        className="rt2-focus rt2-btn-secondary inline-flex min-h-[38px] items-center gap-1.5 rounded px-3 text-[13px] font-bold"
-                      >
-                        {showArchived ? (
-                          <>
-                            <ArrowCounterClockwise size={14} weight="bold" />
-                            Restore
-                          </>
-                        ) : (
-                          <>
-                            <Archive size={14} weight="bold" />
-                            Archive
-                          </>
-                        )}
-                      </button>
+                      <PlayerActionsMenu
+                        label={`More actions for ${p.name}`}
+                        items={[
+                          p.avatarUrl
+                            ? {
+                                key: "remove-avatar",
+                                icon: <Trash size={15} weight="bold" />,
+                                label: "Remove avatar",
+                                danger: true,
+                                onSelect: () =>
+                                  void removePlayerAvatarAdmin(p.id),
+                              }
+                            : null,
+                          {
+                            key: "ban-avatar",
+                            icon: <Prohibit size={15} weight="bold" />,
+                            label: p.avatarBanned ? "Unban avatar" : "Ban avatar",
+                            onSelect: () =>
+                              void setPlayerAvatarBanned(p.id, !p.avatarBanned),
+                          },
+                          {
+                            key: "lock-name",
+                            icon: p.nameLocked ? (
+                              <LockSimpleOpen size={15} weight="bold" />
+                            ) : (
+                              <LockSimple size={15} weight="bold" />
+                            ),
+                            label: p.nameLocked ? "Unlock name" : "Lock name",
+                            onSelect: () =>
+                              void setPlayerNameLocked(p.id, !p.nameLocked),
+                          },
+                          !showArchived && !isRounding
+                            ? {
+                                key: "rounding",
+                                icon: <Coins size={15} weight="bold" />,
+                                label: "Set rounding",
+                                onSelect: () => void setRoundingPlayerId(p.id),
+                              }
+                            : null,
+                          {
+                            key: "archive",
+                            icon: showArchived ? (
+                              <ArrowCounterClockwise size={15} weight="bold" />
+                            ) : (
+                              <Archive size={15} weight="bold" />
+                            ),
+                            label: showArchived ? "Restore" : "Archive",
+                            onSelect: () =>
+                              void toggleArchivePlayer(p.id, !showArchived),
+                          },
+                        ]}
+                      />
                     </div>
                   </>
                 )}

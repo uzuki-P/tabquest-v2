@@ -113,7 +113,7 @@ function HomePage() {
 
       {/* Wrapped Squad Roster Grid (sorted by most unpaid then name, no scroll) */}
       <section aria-label="Who are you?">
-        <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
+        <div className="mb-2.5 flex min-h-[28px] flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-2.5">
             <p className="text-[14px] font-bold text-[var(--rt-muted)]">
               Who are you? Pick a callsign
@@ -214,6 +214,19 @@ function HomePage() {
           BILLS TO PAY (4-COL PAY-ALL + 8-COL BOSS BILLS)
          ============================================================ */}
       <section id="bills" className="grid gap-6 lg:grid-cols-12">
+        <div className="lg:col-span-12">
+          <div className="flex items-baseline justify-between border-b-2 border-[var(--rt-border)] pb-2">
+          <h1 className="rt2-display text-3xl font-extrabold">
+            Bills to pay ({unpaidBills.length} open)
+          </h1>
+          {unpaidBills.length > 0 && (
+            <span className="text-[14px] text-[var(--rt-muted)]">
+              Hover any bar chunk for details
+            </span>
+          )}
+        </div>
+        </div>
+
         <aside className="lg:col-span-4">
           <div className="lg:sticky lg:top-20">
             {you && (
@@ -230,17 +243,6 @@ function HomePage() {
         </aside>
 
         <div className="space-y-4 lg:col-span-8">
-          <div className="flex items-baseline justify-between border-b-2 border-[var(--rt-border)] pb-2">
-            <h1 className="rt2-display text-3xl font-extrabold">
-              Bills to pay ({unpaidBills.length} open)
-            </h1>
-            {unpaidBills.length > 0 && (
-              <span className="text-[14px] text-[var(--rt-muted)]">
-                Hover any bar chunk for details
-              </span>
-            )}
-          </div>
-
           {unpaidBills.length === 0 ? (
             <div className="rounded border-2 border-[var(--rt-teal)] bg-[var(--rt-surface)] p-8 text-center">
               <p className="rt2-display text-3xl font-extrabold text-[var(--rt-teal-ink)]">
