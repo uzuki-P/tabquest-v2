@@ -764,11 +764,11 @@ function PlayerDetailRoute() {
               {/* Inline readout (tap/hover friendly on phone & tablet) */}
               {activeMonth && (
                 <div className="mt-auto pt-3">
-                <div className="flex flex-wrap items-center justify-between gap-2 rounded border border-[var(--rt-border-soft)] bg-[var(--rt-surface-alt)] px-3 py-2 font-arcade-mono text-[12px]">
-                  <span className="font-bold text-[var(--rt-ink)]">
+                <div className="flex flex-col gap-0.5 rounded border border-[var(--rt-border-soft)] bg-[var(--rt-surface-alt)] px-3 py-2 font-arcade-mono text-[12px]">
+                  <span className="truncate font-bold text-[var(--rt-ink)]">
                     {activeMonth.label} · {activeMonth.orders} bills
                   </span>
-                  <span className="tnum text-[var(--rt-muted)]">
+                  <span className="tnum truncate text-[var(--rt-muted)]">
                     Net{" "}
                     <strong className="text-[var(--rt-ink)]">
                       {formatRupiah(activeMonth.spend)}

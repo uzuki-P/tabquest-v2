@@ -186,7 +186,7 @@ export function getAvatarColor(seed: string): string {
 export function PlayerAvatar({
   player,
   size = "md",
-  chamfer = false,
+  chamfer: _chamfer = false,
   heroAttr = false,
   heroStyle = false,
   className = "",
@@ -202,12 +202,12 @@ export function PlayerAvatar({
 }) {
   const sizeCls =
     size === "sm"
-      ? "h-7 w-7 text-[11px] rounded-xs"
+      ? "h-7 w-7 text-[11px]"
       : size === "lg"
-        ? "h-16 w-16 text-2xl rounded-sm"
+        ? "h-16 w-16 text-2xl"
         : size === "xl"
-          ? "h-24 w-24 text-4xl rounded-sm sm:h-28 sm:w-28"
-          : "h-10 w-10 text-[14px] rounded-sm"
+          ? "h-24 w-24 text-4xl sm:h-28 sm:w-28"
+          : "h-10 w-10 text-[14px]"
   const showImg = Boolean(player.avatarUrl) && !player.avatarBanned
   const bgColor = getAvatarColor(player.id ?? player.name)
 
@@ -218,9 +218,7 @@ export function PlayerAvatar({
         ...(heroStyle ? { viewTransitionName: "hero-player-avatar" } : {}),
         ...(showImg ? {} : { backgroundColor: bgColor, color: "#FFFFFF" }),
       }}
-      className={`inline-flex shrink-0 items-center justify-center overflow-hidden font-arcade-mono font-bold ${sizeCls} ${
-        chamfer ? "rt2-chamfer" : ""
-      } ${className}`}
+      className={`inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full font-arcade-mono font-bold ${sizeCls} ${className}`}
     >
       {showImg ? (
         <img
@@ -1048,7 +1046,7 @@ export function PayAllCard({
         open={reportOpen}
         onOpenChange={(next) => !submitting && setReportOpen(next)}
       >
-        <DialogContent className="max-h-[92dvh] gap-3 overflow-y-auto p-4 sm:max-w-2xl">
+        <DialogContent className="rt2-scroll-fade-y max-h-[92dvh] gap-3 overflow-y-auto p-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:max-w-2xl">
           <div className="flex items-baseline justify-between gap-3">
             <DialogTitle className="rt2-display text-xl font-extrabold">
               Pay &amp; report

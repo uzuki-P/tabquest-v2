@@ -750,7 +750,7 @@ export function ReceiptImageEditorDialog({
       <div
         ref={scrollRef}
         data-testid="image-editor-viewport"
-        className="min-h-0 flex-1 overflow-auto"
+        className="min-h-0 flex-1 overflow-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         style={{ padding: GUTTER }}
       >
         <div className="grid min-h-full w-max min-w-full place-items-center">

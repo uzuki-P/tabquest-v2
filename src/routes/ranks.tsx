@@ -255,7 +255,7 @@ function AllRanksRoute() {
                   </span>
                 </div>
 
-                <div className="mt-2 divide-y divide-[var(--rt-border-soft)] sm:mt-3">
+                <div className="mt-2 divide-y-2 divide-[var(--rt-ui-border)] sm:mt-3">
                   {shownSpenders.map((p) => {
                     const rank = spendBoard.findIndex((x) => x.id === p.id) + 1
                     const tier = tierForSpend(p.monthlySpend, topSpend)
@@ -281,8 +281,8 @@ function AllRanksRoute() {
                             : ""
                         }`}
                       >
-                        <div className="flex min-w-0 items-center gap-2.5 sm:items-start sm:gap-3">
-                          <span className="rt2-display flex w-6 shrink-0 items-center justify-center text-2xl font-extrabold text-[var(--rt-muted)] sm:w-7 sm:pt-0.5 sm:text-3xl">
+                        <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
+                          <span className="rt2-display flex w-6 shrink-0 items-center justify-center text-2xl font-extrabold text-[var(--rt-muted)] sm:w-7 sm:text-3xl">
                             {rank === 1 ? (
                               <Crown
                                 size={20}
@@ -349,7 +349,7 @@ function AllRanksRoute() {
                   </span>
                 </div>
 
-                <div className="mt-2 divide-y divide-[var(--rt-border-soft)] sm:mt-3">
+                <div className="mt-2 divide-y-2 divide-[var(--rt-ui-border)] sm:mt-3">
                   {shownTippers.map((p) => {
                     const rank = tipBoard.findIndex((x) => x.id === p.id) + 1
                     const above = rank > 1 ? tipBoard[rank - 2] : null
@@ -382,8 +382,8 @@ function AllRanksRoute() {
                             : ""
                         }`}
                       >
-                        <div className="flex min-w-0 items-center gap-2.5 sm:items-start sm:gap-3">
-                          <span className="rt2-display flex w-6 shrink-0 items-center justify-center text-2xl font-extrabold text-[var(--rt-muted)] sm:w-7 sm:pt-0.5 sm:text-3xl">
+                        <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
+                          <span className="rt2-display flex w-6 shrink-0 items-center justify-center text-2xl font-extrabold text-[var(--rt-muted)] sm:w-7 sm:text-3xl">
                             {rank === 1 ? (
                               <Crown
                                 size={20}

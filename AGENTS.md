@@ -20,3 +20,12 @@ Every new feature, service, or migration MUST follow these rules so D1 stays fas
    - Normalize `players.email` to lowercase on write so `eq(players.email, ...)` hits `players_email_idx` without `LOWER(...)`.
 8. **No `Bun.*` runtime APIs in Worker code:** `src/**` (excluding `*.test.ts`) runs on Cloudflare Workers; use Web Crypto, `uuidv7`, and standard Fetch/Web APIs.
 9. **Migration safety:** Never commit a migration that drops a table while another table cascades from it (enforced by `src/db/migrations.test.ts`).
+
+## UI, Mobile & Accessibility Rules
+
+Every UI change or new view MUST satisfy these rules across both light and dark themes:
+
+1. **First-class mobile and desktop layouts:** Both mobile and desktop versions must look intentional and balanced. On mobile, rearrange or stack layouts freely so the screen stays easy to scan, as long as all data and actions remain accessible.
+2. **No unexpected horizontal scroll on mobile:** Never let cards, tables, pills, or long strings cause unintended horizontal overflow on mobile viewports (`min-w-0`, `truncate`, `flex-wrap`, or responsive stacking where needed).
+3. **No visible vertical scrollbars on inner scrollable areas:** For scrollable modals, drawers, and inner panels (such as receipt previews), hide the vertical scrollbar (`[scrollbar-width:none] [&::-webkit-scrollbar]:hidden`) and render subtle top/bottom fade shadows whenever content can scroll up or down.
+4. **WCAG AA contrast in light and dark themes:** All text, icons, badges, inputs, and selected/active states must pass WCAG AA contrast (at least 4.5:1 for normal text and 3:1 for large text and UI components) in both light and dark themes. Avoid hardcoding colors that only work on one theme surface; prefer theme tokens (`--rt-*`) or `text-current` on inverted surfaces.
