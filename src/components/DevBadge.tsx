@@ -57,7 +57,7 @@ export function DevBadge() {
         }
       }}
       style={{ left: pos.x, top: pos.y, touchAction: "none" }}
-      className="fixed z-[200] cursor-grab select-none rounded bg-fuchsia-600 px-2.5 py-1 font-mono text-[12px] font-extrabold tracking-wider text-white shadow-lg ring-2 ring-white/70 active:cursor-grabbing"
+      className="fixed z-40 cursor-grab select-none rounded bg-fuchsia-600 px-2.5 py-1 font-mono text-[12px] font-extrabold tracking-wider text-white shadow-lg ring-2 ring-white/70 active:cursor-grabbing"
     >
       LOCAL DEV &middot; LOCAL DB
     </div>
