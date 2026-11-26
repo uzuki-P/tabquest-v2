@@ -260,11 +260,9 @@ function AllRanksRoute() {
                     const rank = spendBoard.findIndex((x) => x.id === p.id) + 1
                     const tier = tierForSpend(p.monthlySpend, topSpend)
                     const gap = gapToNextSpend(p.id, spendBoard)
-                    const isSelf =
-                      me.linkedPlayerId !== null && p.id === me.linkedPlayerId
-                    const isViewing = you !== null && p.id === you.id
-                    const showYouBadge =
-                      isSelf || (me.linkedPlayerId === null && isViewing)
+                    const showYouBadge = me.authenticated
+                      ? me.linkedPlayerId !== null && p.id === me.linkedPlayerId
+                      : you !== null && p.id === you.id
 
                     return (
                       <Link
@@ -360,11 +358,9 @@ function AllRanksRoute() {
                       totalTipPot > 0
                         ? ((p.monthlyTips / totalTipPot) * 100).toFixed(1)
                         : "0.0"
-                    const isSelf =
-                      me.linkedPlayerId !== null && p.id === me.linkedPlayerId
-                    const isViewing = you !== null && p.id === you.id
-                    const showYouBadge =
-                      isSelf || (me.linkedPlayerId === null && isViewing)
+                    const showYouBadge = me.authenticated
+                      ? me.linkedPlayerId !== null && p.id === me.linkedPlayerId
+                      : you !== null && p.id === you.id
                     const stats = getPlayerTipStats(p)
 
                     return (

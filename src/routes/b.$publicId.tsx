@@ -160,8 +160,10 @@ function BillDetailRoute() {
 
   const bill = detail.bill
   const remaining = getBillRemainingAmount(bill)
-  const selfPlayer = me.linkedPlayerId
-    ? (players.find((p) => p.id === me.linkedPlayerId) ?? null)
+  const selfPlayer = me.authenticated
+    ? me.linkedPlayerId
+      ? (players.find((p) => p.id === me.linkedPlayerId) ?? null)
+      : null
     : you
   const youOwed = selfPlayer ? getPlayerUnpaidTotal(selfPlayer) : 0
   const equalFee =
@@ -239,7 +241,7 @@ function BillDetailRoute() {
             <HpBar
               bill={bill}
               players={players}
-              youId={you?.id ?? ""}
+              youId={selfPlayer?.id ?? ""}
               preview={preview}
               hit={hit}
               tall
@@ -313,13 +315,8 @@ function BillDetailRoute() {
                   : "unpaid"
             const tip =
               s.paidAmount !== null ? Math.max(0, s.paidAmount - s.totalOwed) : 0
-            const isSelf =
-              me.linkedPlayerId !== null && s.playerId === me.linkedPlayerId
-            const isViewing = you !== null && s.playerId === you.id
             const showYouBadge =
-              isSelf || (me.linkedPlayerId === null && isViewing)
-            const showViewingBadge =
-              me.linkedPlayerId !== null && isViewing && !isSelf
+              selfPlayer !== null && s.playerId === selfPlayer.id
 
             return (
               <article
@@ -331,9 +328,7 @@ function BillDetailRoute() {
                 } ${
                   showYouBadge
                     ? "pl-5 shadow-[inset_4px_0_0_0_var(--rt-accent)]"
-                    : showViewingBadge
-                      ? "pl-5 shadow-[inset_4px_0_0_0_var(--rt-amber)]"
-                      : ""
+                    : ""
                 }`}
               >
                 <Link
@@ -360,11 +355,6 @@ function BillDetailRoute() {
                       {showYouBadge && (
                         <span className="ml-2 rounded bg-[var(--rt-accent-soft)] px-1.5 py-0.5 font-arcade-mono text-[13px] font-bold text-[var(--rt-accent-ink)]">
                           You
-                        </span>
-                      )}
-                      {showViewingBadge && (
-                        <span className="ml-2 rounded bg-[var(--rt-amber-soft)] px-1.5 py-0.5 font-arcade-mono text-[13px] font-bold text-[var(--rt-amber-ink)]">
-                          Viewing
                         </span>
                       )}
                     </div>
