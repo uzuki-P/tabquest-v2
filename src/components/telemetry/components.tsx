@@ -542,11 +542,17 @@ export function HpBar({
 
       {/* Track + Sibling FX & Tooltip Layer (scoped strictly to the track height) */}
       <div className="relative">
-      <div
+      <span
         role="meter"
         aria-label={`${bill.merchant} armor integrity`}
         aria-valuenow={remaining}
+        aria-valuemin={0}
         aria-valuemax={bill.finalTotal}
+        className="sr-only"
+      />
+      <div
+        role="group"
+        aria-label={`${bill.merchant} players`}
         className={`flex w-full gap-[3px] rounded-[3px] border-2 border-[var(--rt-border)] bg-[var(--rt-bg)] p-[3px] ${
           tall ? "h-11" : "h-8"
         }`}
@@ -1639,6 +1645,7 @@ export function AppHeader({
                   <button
                     key={item.id}
                     type="button"
+                    aria-pressed={themePref === item.id}
                     onClick={() => {
                       onThemePrefChange(item.id)
                       setThemeMenuOpen(false)

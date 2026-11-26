@@ -244,11 +244,13 @@ html[data-theme="dark"] .rt2-root {
   from { transform: translate3d(-10px, 0, 0); opacity: 0; }
   to { transform: translate3d(0, 0, 0); opacity: 1; }
 }
+/* "backwards" (not "both"): once finished, no transform lingers on the panel,
+   which would otherwise keep stale overflow and trap position:fixed children. */
 .rt2-panel-in-right {
-  animation: rt2-panel-in-right 160ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: rt2-panel-in-right 160ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
 }
 .rt2-panel-in-left {
-  animation: rt2-panel-in-left 160ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: rt2-panel-in-left 160ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
 }
 @media (prefers-reduced-motion: reduce) {
   .rt2-panel-in-right,

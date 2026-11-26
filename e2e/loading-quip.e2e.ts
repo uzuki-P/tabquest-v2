@@ -1,7 +1,7 @@
-import { expect, test } from "@playwright/test"
 import type { Page } from "@playwright/test"
 
-import { FIXTURE_PLAYER, mockApi, wait } from "./fixtures"
+import { DOSSIER_PLAYER } from "./support/api"
+import { expect, test } from "./support/test"
 
 // Mirrors LOADING_QUIP_INTERVAL_MS (4500ms) with slack for timer jitter.
 const MIN_QUIP_GAP_MS = 4000
@@ -65,57 +65,63 @@ function tooFastChanges(log: QuipSample[]) {
   return out
 }
 
-test("loading quip stays put through SSR, hydration and slow data", async ({
-  page,
-}) => {
-  await recordQuips(page)
-  await mockApi(page)
-  await page.route(/\/api\/public\/home(\?|$)/, async (route) => {
-    await wait(API_DELAY_MS)
-    await route.fallback()
-  })
+test.describe("slow home data", () => {
+  test.use({ api: { delays: [{ match: /^\/api\/public\/home/, ms: API_DELAY_MS }] } })
 
-  await page.goto("/")
-  await expect(page.getByTestId("loading-quip")).toBeVisible()
-  await expect(page.getByTestId("loading-quip")).toBeHidden({
-    timeout: API_DELAY_MS + 10_000,
-  })
+  test("loading quip stays put through SSR, hydration and slow data", async ({
+    page,
+  }) => {
+    await recordQuips(page)
+    await page.goto("/")
+    await expect(page.getByTestId("loading-quip")).toBeVisible()
+    // The delayed fetch only starts after hydration, which is slow in dev.
+    await expect(page.getByTestId("loading-quip")).toBeHidden({
+      timeout: API_DELAY_MS + 30_000,
+    })
 
-  const log = await page.evaluate(() => window.__quipLog)
-  const runs = quipRuns(log)
-  // ~9s of loading at 4.5s per quip: it should rotate, but only a couple times.
-  expect(runs.length).toBeGreaterThanOrEqual(2)
-  expect(runs.length).toBeLessThanOrEqual(3)
-  expect(tooFastChanges(log)).toEqual([])
+    const log = await page.evaluate(() => window.__quipLog)
+    const runs = quipRuns(log)
+    const shown = log.filter((s) => s.quip !== null)
+    const loadingMs = shown.at(-1)!.t - shown[0].t
+    // At least 9s of loading at 4.5s per quip: it should rotate, but no more
+    // often than the interval allows.
+    expect(runs.length).toBeGreaterThanOrEqual(2)
+    expect(runs.length).toBeLessThanOrEqual(Math.floor(loadingMs / MIN_QUIP_GAP_MS) + 1)
+    expect(tooFastChanges(log)).toEqual([])
+  })
 })
 
-test("loading quip does not reset when PageLoading remounts during navigation", async ({
-  page,
-}) => {
-  await recordQuips(page)
-  await mockApi(page)
-  // Player detail arrives late, so navigation goes route-pending shell ->
-  // the page's own "Loading dossier..." state. Its content is irrelevant here,
-  // so a delayed 404 (the "not found" view) ends the loading state.
-  await page.route(
-    `**/api/public/players/${FIXTURE_PLAYER.id}`,
-    async (route) => {
-      await wait(API_DELAY_MS)
-      await route.fulfill({ status: 404, body: "" })
-    }
-  )
-  await page.goto("/")
-
-  const playerLink = page.locator(`a[href="/players/${FIXTURE_PLAYER.id}"]`)
-  await expect(playerLink.first()).toBeVisible({ timeout: 20_000 })
-  await playerLink.first().click()
-
-  await expect(page.getByText("Loading dossier...")).toBeVisible()
-  await expect(page.getByTestId("loading-quip")).toBeHidden({
-    timeout: API_DELAY_MS + 10_000,
+test.describe("slow player data", () => {
+  // Player detail arrives late, so navigation goes route-pending shell -> the
+  // page's own "Loading dossier..." state.
+  test.use({
+    api: {
+      delays: [{ match: /^\/api\/public\/players\/[^/]+$/, ms: API_DELAY_MS }],
+    },
   })
 
-  const log = await page.evaluate(() => window.__quipLog)
-  expect(log.some((s) => s.label === "Loading dossier...")).toBe(true)
-  expect(tooFastChanges(log)).toEqual([])
+  test("loading quip does not reset when PageLoading remounts during navigation", async ({
+    page,
+  }) => {
+    await recordQuips(page)
+    await page.addInitScript((id) => {
+      localStorage.setItem("tq-selected-player", id)
+    }, DOSSIER_PLAYER.id)
+    await page.goto("/")
+
+    const playerLink = page.getByRole("link", {
+      name: `Open ${DOSSIER_PLAYER.name}’s dossier`,
+    })
+    await expect(playerLink).toBeVisible({ timeout: 20_000 })
+    await playerLink.click()
+
+    await expect(page.getByText("Loading dossier...")).toBeVisible()
+    await expect(page.getByTestId("loading-quip")).toBeHidden({
+      timeout: API_DELAY_MS + 30_000,
+    })
+
+    const log = await page.evaluate(() => window.__quipLog)
+    expect(log.some((s) => s.label === "Loading dossier...")).toBe(true)
+    expect(tooFastChanges(log)).toEqual([])
+  })
 })

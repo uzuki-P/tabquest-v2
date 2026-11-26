@@ -149,7 +149,7 @@ function HomePage() {
                     ? "bg-[var(--rt-accent)]"
                     : pOwed > 0
                       ? "bg-[var(--rt-ui-border)]"
-                      : "bg-[var(--rt-ui-border)] opacity-80 hover:opacity-100"
+                      : "bg-[var(--rt-ui-border)]"
                 }`}
               >
                 <div
@@ -172,7 +172,7 @@ function HomePage() {
                         <span
                           className={`shrink-0 rounded px-1 py-0.5 font-arcade-mono text-[9px] leading-none font-bold uppercase ${
                             active
-                              ? "bg-black/20 text-current"
+                              ? "border border-current text-current"
                               : "bg-[var(--rt-accent-soft)] text-[var(--rt-accent-ink)]"
                           }`}
                         >
@@ -183,7 +183,7 @@ function HomePage() {
                     <p
                       className={`tnum truncate font-arcade-mono text-[13px] font-semibold whitespace-nowrap ${
                         active
-                          ? "opacity-90"
+                          ? ""
                           : pOwed > 0
                             ? "text-[var(--rt-accent-ink)]"
                             : "text-[var(--rt-teal-ink)]"

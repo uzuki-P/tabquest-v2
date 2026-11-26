@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* The app themes via html[data-theme], not the OS setting, so `dark:` must follow it. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 @theme inline {
   --color-background: var(--rt-bg);
   --color-foreground: var(--rt-ink);
@@ -129,4 +132,12 @@ html[data-theme="dark"] {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Until hydration measures the gliding tab indicator it stays [hidden], which
+   would leave the active tab's light text on a light track. Paint the active
+   tab itself in the meantime. */
+[data-slot="tabs-list"]:has(> [data-slot="tabs-indicator"][hidden])
+  > [data-slot="tabs-trigger"][data-active] {
+  background-color: var(--rt-ink);
 }

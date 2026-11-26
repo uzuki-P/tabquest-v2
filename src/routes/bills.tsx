@@ -181,7 +181,7 @@ function BillsArchivePage() {
                     selected
                       ? "border-[var(--rt-ink)] bg-[var(--rt-ink)] text-[var(--rt-surface)]"
                       : count === 0
-                        ? "rt2-btn-secondary opacity-65"
+                        ? "rt2-btn-secondary border-dashed"
                         : "rt2-btn-secondary"
                   }`}
                 >

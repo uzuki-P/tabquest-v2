@@ -133,6 +133,12 @@ function AppShell() {
     ? `pending:${targetMainKey}`
     : resolvedMainKey
 
+  // Marks the document once React has hydrated so E2E tests (and anything
+  // else) can tell server HTML from an interactive page.
+  useEffect(() => {
+    document.documentElement.dataset.hydrated = "true"
+  }, [])
+
   // Subtle mobile haptic pulse on interactive taps
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -180,10 +186,10 @@ function AppShell() {
       </main>
 
       <footer className="mx-auto mt-12 max-w-[1200px] px-4 text-center">
-        <p className="font-arcade-mono text-[12px] text-[var(--rt-muted)] opacity-75">
+        <p className="font-arcade-mono text-[12px] text-[var(--rt-muted)]">
           Tabquest {__APP_VERSION__}
         </p>
-        <p className="mt-0.5 font-arcade-mono text-[11px] text-[var(--rt-muted)] opacity-60">
+        <p className="mt-0.5 font-arcade-mono text-[11px] text-[var(--rt-muted)] opacity-90">
           {__APP_BUILD_TIME__}
         </p>
       </footer>

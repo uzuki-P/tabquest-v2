@@ -901,7 +901,7 @@ function PlayerDetailRoute() {
                     key={day.short}
                     className={`flex-1 ${
                       day.weekend
-                        ? "text-red-500 dark:text-red-400"
+                        ? "text-red-700 dark:text-red-400"
                         : activeWeekday?.idx === day.idx
                           ? "text-[var(--rt-ink)]"
                           : "text-[var(--rt-muted)]"
