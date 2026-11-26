@@ -121,7 +121,7 @@ function HomePage() {
               <button
                 type="button"
                 onClick={() => setActivePlayerId(me.linkedPlayerId!)}
-                className="rt2-focus rounded border border-[var(--rt-ui-border)] bg-[var(--rt-surface-alt)] px-2 py-0.5 font-arcade-mono text-[12px] font-bold text-[var(--rt-accent-ink)] hover:border-[var(--rt-accent)]"
+                className="rt2-focus cursor-pointer rounded border border-[var(--rt-ui-border)] bg-[var(--rt-surface-alt)] px-2 py-0.5 font-arcade-mono text-[12px] font-bold text-[var(--rt-accent-ink)] hover:border-[var(--rt-accent)]"
               >
                 Back to me
               </button>
