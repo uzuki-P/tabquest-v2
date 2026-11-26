@@ -193,6 +193,10 @@ interface AppStoreValue {
   createBill: (
     input: UpsertBillInput
   ) => Promise<{ id: string; publicId: string; status: "draft" | "published" } | null>
+  updateBill: (
+    billId: string,
+    input: UpsertBillInput
+  ) => Promise<{ id: string; publicId: string; status: "draft" | "published" } | null>
   publishDraftBill: (billId: string) => Promise<boolean>
   toggleArchiveBill: (billId: string, archived: boolean) => Promise<boolean>
   deleteDraftBill: (billId: string) => Promise<boolean>
@@ -936,6 +940,36 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     [pushToast, refreshAdmin, refreshWorkspace]
   )
 
+  const updateBill = useCallback(
+    async (billId: string, input: UpsertBillInput) => {
+      try {
+        const res = await apiFetch<{
+          id: string
+          publicId: string
+          status: "draft" | "published"
+          finalTotal: number
+        }>(`/api/admin/bills/${encodeURIComponent(billId)}`, {
+          method: "PATCH",
+          body: JSON.stringify(input),
+        })
+        pushToast(
+          res.status === "published"
+            ? `Saved ${input.merchant} (${formatRupiah(res.finalTotal)}).`
+            : `Updated draft: ${input.merchant}.`
+        )
+        await Promise.all([refreshWorkspace(), refreshAdmin()])
+        return res
+      } catch (err) {
+        pushToast(
+          err instanceof Error ? err.message : "Failed to update bill.",
+          "error"
+        )
+        return null
+      }
+    },
+    [pushToast, refreshAdmin, refreshWorkspace]
+  )
+
   const publishDraftBill = useCallback(
     async (billId: string) => {
       try {
@@ -1082,6 +1116,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         removeMyAvatar,
         updateMyUsername,
         createBill,
+        updateBill,
         publishDraftBill,
         toggleArchiveBill,
         deleteDraftBill,

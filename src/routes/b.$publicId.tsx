@@ -2,6 +2,7 @@ import {
   Check,
   Clock,
   Heart,
+  PencilSimple,
   Plus,
   Receipt,
   Warning,
@@ -180,6 +181,17 @@ function BillDetailRoute() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5">
+            {role === "admin" && (
+              <Link
+                to="/admin/bills/$billId/edit"
+                params={{ billId: bill.id }}
+                className="rt2-focus rt2-btn-secondary inline-flex min-h-[44px] items-center gap-2 rounded px-4 text-[15px] font-bold"
+              >
+                <PencilSimple size={18} weight="bold" />
+                Edit bill
+              </Link>
+            )}
+
             <button
               type="button"
               onClick={() => {

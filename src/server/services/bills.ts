@@ -980,8 +980,25 @@ export async function updateBill(
   rawInput: UpsertBillInput
 ) {
   const input = upsertBillSchema.parse(rawInput)
-  const [existingRows, roundingPlayers] = await db.batch([
+  const [existingRows, existingBpRows, roundingPlayers] = await db.batch([
     db.select().from(bills).where(eq(bills.id, billId)).limit(1),
+    db
+      .select({
+        id: billPlayers.id,
+        playerId: billPlayers.playerId,
+        alias: billPlayers.alias,
+        status: paymentStatuses.status,
+        paidAmount: paymentStatuses.paidAmount,
+        paidAt: paymentStatuses.paidAt,
+        lastChangedBy: paymentStatuses.lastChangedBy,
+        updatedAt: paymentStatuses.updatedAt,
+      })
+      .from(billPlayers)
+      .leftJoin(
+        paymentStatuses,
+        eq(paymentStatuses.billPlayerId, billPlayers.id)
+      )
+      .where(eq(billPlayers.billId, billId)),
     db
       .select({ id: players.id })
       .from(players)
@@ -992,6 +1009,16 @@ export async function updateBill(
   const existing = existingRows[0]
   if (!existing) {
     throw new ServiceError(404, "BILL_NOT_FOUND", "Bill not found.")
+  }
+
+  const prevPaymentByPlayerId = new Map<
+    string,
+    (typeof existingBpRows)[number]
+  >()
+  const prevPaymentByAlias = new Map<string, (typeof existingBpRows)[number]>()
+  for (const row of existingBpRows) {
+    if (row.playerId) prevPaymentByPlayerId.set(row.playerId, row)
+    prevPaymentByAlias.set(row.alias.toLowerCase(), row)
   }
 
   const graph = resolveBillGraph(input)
@@ -1043,14 +1070,29 @@ export async function updateBill(
     }
   }
 
-  const paymentStatusRows = billPlayerRows.map((bp) => ({
-    billPlayerId: bp.id,
-    status: "unpaid" as const,
-    paidAmount: null,
-    paidAt: null,
-    lastChangedBy: null,
-    updatedAt: now,
-  }))
+  const paymentStatusRows = billPlayerRows.map((bp) => {
+    const prev =
+      (bp.playerId ? prevPaymentByPlayerId.get(bp.playerId) : undefined) ??
+      prevPaymentByAlias.get(bp.alias.toLowerCase())
+    if (prev && prev.status === "paid") {
+      return {
+        billPlayerId: bp.id,
+        status: "paid" as const,
+        paidAmount: prev.paidAmount,
+        paidAt: prev.paidAt,
+        lastChangedBy: prev.lastChangedBy,
+        updatedAt: prev.updatedAt ?? now,
+      }
+    }
+    return {
+      billPlayerId: bp.id,
+      status: "unpaid" as const,
+      paidAmount: null,
+      paidAt: null,
+      lastChangedBy: null,
+      updatedAt: now,
+    }
+  })
 
   // Delete old child rows (cascades allocations & payment_statuses) and insert new ones atomically
   const statements: Array<

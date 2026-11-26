@@ -10,10 +10,12 @@ import * as schema from "@/db/schema"
 import {
   createBill,
   deleteDraftBill,
+  getAdminBillDetail,
   getPublicBillDetail,
   listAdminBills,
   publishBill,
   setBillArchived,
+  updateBill,
 } from "@/server/services/bills"
 import { ServiceError } from "@/server/services/errors"
 import { pollOcrJob, submitOcrJob } from "@/server/services/ocr"
@@ -234,6 +236,92 @@ describe("Phase 4 D1 services", () => {
     await expect(deleteDraftBill(db, null, draft.id)).rejects.toBeInstanceOf(
       ServiceError
     )
+  })
+
+  it("updates an existing bill while preserving paid payment statuses and existing receipt image", async () => {
+    const { db } = createTestDb()
+
+    const alice = await createPlayer(db, { name: "Alice" })
+    const bob = await createPlayer(db, { name: "Bob" })
+    const carol = await createPlayer(db, { name: "Carol" })
+
+    const created = await createBill(db, {
+      merchant: "Bakmi GM",
+      title: "Lunch",
+      orderDate: "2026-11-21",
+      publish: true,
+      imageObjectKey: "receipts/bakmi-1.webp",
+      imageMediaType: "image/webp",
+      imageByteSize: 12345,
+      items: [
+        { id: "it-1", name: "Bakmi Ayam", quantity: 2, bundleSize: 1, unitPrice: 30000 },
+      ],
+      adjustments: [],
+      billPlayers: [
+        { id: alice.id, playerId: alice.id, alias: "Alice" },
+        { id: bob.id, playerId: bob.id, alias: "Bob" },
+      ],
+      allocations: [
+        { itemKey: "it-1", billPlayerKey: alice.id, quantity: 1 },
+        { itemKey: "it-1", billPlayerKey: bob.id, quantity: 1 },
+      ],
+    })
+
+    const initialDetail = await getAdminBillDetail(db, created.id)
+    const aliceBp = initialDetail.billPlayers.find((bp) => bp.playerId === alice.id)
+    expect(aliceBp).toBeDefined()
+
+    // Mark Alice as paid
+    await toggleBillPlayerPayment(
+      db,
+      { billPlayerId: aliceBp!.id, status: "paid", paidAmount: 30000 },
+      "admin@example.com"
+    )
+
+    // Edit the bill: change merchant, add Carol, add delivery fee, omit image fields
+    const updated = await updateBill(db, created.id, {
+      merchant: "Bakmi GM Kemang",
+      title: "Friday Lunch",
+      orderDate: "2026-11-21",
+      publish: true,
+      items: [
+        { id: "it-1", name: "Bakmi Ayam", quantity: 3, bundleSize: 1, unitPrice: 30000 },
+      ],
+      adjustments: [
+        { id: "adj-1", type: "delivery", label: "Delivery", signedAmount: 9000 },
+      ],
+      billPlayers: [
+        { id: alice.id, playerId: alice.id, alias: "Alice" },
+        { id: bob.id, playerId: bob.id, alias: "Bob" },
+        { id: carol.id, playerId: carol.id, alias: "Carol" },
+      ],
+      allocations: [
+        { itemKey: "it-1", billPlayerKey: alice.id, quantity: 1 },
+        { itemKey: "it-1", billPlayerKey: bob.id, quantity: 1 },
+        { itemKey: "it-1", billPlayerKey: carol.id, quantity: 1 },
+      ],
+    })
+
+    expect(updated.status).toBe("published")
+    expect(updated.finalTotal).toBe(99000)
+
+    const afterAdmin = await getAdminBillDetail(db, created.id)
+    expect(afterAdmin.bill.merchant).toBe("Bakmi GM Kemang")
+    expect(afterAdmin.bill.imageObjectKey).toBe("receipts/bakmi-1.webp")
+
+    const afterPublic = await getPublicBillDetail(db, created.publicId)
+    expect(afterPublic.bill.splits).toHaveLength(3)
+    const aliceSplit = afterPublic.bill.splits.find((s) => s.playerId === alice.id)
+    const bobSplit = afterPublic.bill.splits.find((s) => s.playerId === bob.id)
+    const carolSplit = afterPublic.bill.splits.find((s) => s.playerId === carol.id)
+
+    expect(aliceSplit?.status).toBe("paid")
+    expect(aliceSplit?.paidAmount).toBe(30000)
+    expect(aliceSplit?.totalOwed).toBe(33000)
+    expect(bobSplit?.status).toBe("unpaid")
+    expect(bobSplit?.totalOwed).toBe(33000)
+    expect(carolSplit?.status).toBe("unpaid")
+    expect(carolSplit?.totalOwed).toBe(33000)
   })
 
   it("handles transfer claims (linked users only) and Admin Collect All with optimistic guard & tip attribution", async () => {

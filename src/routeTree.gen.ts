@@ -30,6 +30,7 @@ import { Route as ApiPublicHomeRouteImport } from './routes/api/public/home'
 import { Route as ApiPublicRanksRouteImport } from './routes/api/public/ranks'
 import { Route as ApiPublicSettingsRouteImport } from './routes/api/public/settings'
 import { Route as ApiPublicTipsRouteImport } from './routes/api/public/tips'
+import { Route as AdminBillsBillIdEditRouteImport } from './routes/admin/bills.$billId.edit'
 import { Route as ApiAdminBillsIndexRouteImport } from './routes/api/admin/bills/index'
 import { Route as ApiAdminBillsBillIdRouteImport } from './routes/api/admin/bills/$billId'
 import { Route as ApiAdminPaymentsCollectAllRouteImport } from './routes/api/admin/payments/collect-all'
@@ -152,6 +153,11 @@ const ApiPublicTipsRoute = ApiPublicTipsRouteImport.update({
   path: '/api/public/tips',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminBillsBillIdEditRoute = AdminBillsBillIdEditRouteImport.update({
+  id: '/bills/$billId/edit',
+  path: '/bills/$billId/edit',
+  getParentRoute: () => AdminRoute,
+} as any)
 const ApiAdminBillsIndexRoute = ApiAdminBillsIndexRouteImport.update({
   id: '/api/admin/bills/',
   path: '/api/admin/bills/',
@@ -261,6 +267,7 @@ export interface FileRoutesByFullPath {
   '/api/public/settings': typeof ApiPublicSettingsRoute
   '/api/public/tips': typeof ApiPublicTipsRoute
   '/api/me/': typeof ApiMeIndexRoute
+  '/admin/bills/$billId/edit': typeof AdminBillsBillIdEditRoute
   '/api/admin/bills/$billId': typeof ApiAdminBillsBillIdRoute
   '/api/admin/payments/collect-all': typeof ApiAdminPaymentsCollectAllRoute
   '/api/admin/payments/toggle': typeof ApiAdminPaymentsToggleRoute
@@ -299,6 +306,7 @@ export interface FileRoutesByTo {
   '/api/public/settings': typeof ApiPublicSettingsRoute
   '/api/public/tips': typeof ApiPublicTipsRoute
   '/api/me': typeof ApiMeIndexRoute
+  '/admin/bills/$billId/edit': typeof AdminBillsBillIdEditRoute
   '/api/admin/bills/$billId': typeof ApiAdminBillsBillIdRoute
   '/api/admin/payments/collect-all': typeof ApiAdminPaymentsCollectAllRoute
   '/api/admin/payments/toggle': typeof ApiAdminPaymentsToggleRoute
@@ -339,6 +347,7 @@ export interface FileRoutesById {
   '/api/public/settings': typeof ApiPublicSettingsRoute
   '/api/public/tips': typeof ApiPublicTipsRoute
   '/api/me/': typeof ApiMeIndexRoute
+  '/admin/bills/$billId/edit': typeof AdminBillsBillIdEditRoute
   '/api/admin/bills/$billId': typeof ApiAdminBillsBillIdRoute
   '/api/admin/payments/collect-all': typeof ApiAdminPaymentsCollectAllRoute
   '/api/admin/payments/toggle': typeof ApiAdminPaymentsToggleRoute
@@ -380,6 +389,7 @@ export interface FileRouteTypes {
     | '/api/public/settings'
     | '/api/public/tips'
     | '/api/me/'
+    | '/admin/bills/$billId/edit'
     | '/api/admin/bills/$billId'
     | '/api/admin/payments/collect-all'
     | '/api/admin/payments/toggle'
@@ -418,6 +428,7 @@ export interface FileRouteTypes {
     | '/api/public/settings'
     | '/api/public/tips'
     | '/api/me'
+    | '/admin/bills/$billId/edit'
     | '/api/admin/bills/$billId'
     | '/api/admin/payments/collect-all'
     | '/api/admin/payments/toggle'
@@ -457,6 +468,7 @@ export interface FileRouteTypes {
     | '/api/public/settings'
     | '/api/public/tips'
     | '/api/me/'
+    | '/admin/bills/$billId/edit'
     | '/api/admin/bills/$billId'
     | '/api/admin/payments/collect-all'
     | '/api/admin/payments/toggle'
@@ -658,6 +670,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicTipsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/bills/$billId/edit': {
+      id: '/admin/bills/$billId/edit'
+      path: '/bills/$billId/edit'
+      fullPath: '/admin/bills/$billId/edit'
+      preLoaderRoute: typeof AdminBillsBillIdEditRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/api/admin/bills/': {
       id: '/api/admin/bills/'
       path: '/api/admin/bills'
@@ -778,6 +797,7 @@ interface AdminRouteChildren {
   AdminSettingsRoute: typeof AdminSettingsRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminBillsNewRoute: typeof AdminBillsNewRoute
+  AdminBillsBillIdEditRoute: typeof AdminBillsBillIdEditRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
@@ -785,6 +805,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminSettingsRoute: AdminSettingsRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminBillsNewRoute: AdminBillsNewRoute,
+  AdminBillsBillIdEditRoute: AdminBillsBillIdEditRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)

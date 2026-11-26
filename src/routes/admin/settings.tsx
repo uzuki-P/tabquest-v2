@@ -40,6 +40,7 @@ function AdminSettingsPage() {
     branding,
     updateBranding,
     resetBranding,
+    me,
   } = useAppStore()
 
   // Branding state
@@ -55,7 +56,7 @@ function AdminSettingsPage() {
   const [type, setType] = useState<PaymentMethodType>("bank")
   const [label, setLabel] = useState("")
   const [accountNumber, setAccountNumber] = useState("")
-  const [accountHolder, setAccountHolder] = useState("Pajar (Admin)")
+  const [accountHolder, setAccountHolder] = useState(me.user?.name ?? "")
   const [note, setNote] = useState("")
 
   // Inline editing state

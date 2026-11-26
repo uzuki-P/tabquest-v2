@@ -4,6 +4,7 @@ import {
   CaretRight,
   MagnifyingGlass,
   PaperPlaneTilt,
+  PencilSimple,
   Plus,
   Trash,
   X,
@@ -13,6 +14,14 @@ import { useState } from "react"
 
 import { AdminShell } from "@/components/admin/AdminShell"
 import { SegmentedTabs, fmtDate } from "@/components/telemetry/components"
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { formatRupiah } from "@/domain/money"
 import {
   getBillRemainingAmount,
@@ -38,6 +47,11 @@ function AdminBillsPage() {
 
   const [tab, setTab] = useState<"active" | "drafts" | "archived">("active")
   const [query, setQuery] = useState("")
+  const [pendingDelete, setPendingDelete] = useState<{
+    id: string
+    merchant: string
+  } | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   const openDebtors = players.filter((p) => p.unpaidBills.length > 0)
   const pendingClaims = openDebtors.filter((p) => p.pendingClaim !== null)
@@ -272,6 +286,14 @@ function AdminBillsPage() {
                   <div className="flex flex-wrap items-center gap-2">
                     {tab === "drafts" ? (
                       <>
+                        <Link
+                          to="/admin/bills/$billId/edit"
+                          params={{ billId: bill.id }}
+                          className="rt2-focus rt2-btn-secondary inline-flex min-h-[40px] items-center gap-1.5 rounded px-3 text-[14px] font-bold"
+                        >
+                          <PencilSimple size={15} weight="bold" />
+                          Edit
+                        </Link>
                         <button
                           type="button"
                           onClick={() => void publishDraftBill(bill.id)}
@@ -283,7 +305,9 @@ function AdminBillsPage() {
                         <button
                           type="button"
                           aria-label={`Delete draft ${bill.merchant}`}
-                          onClick={() => void deleteDraftBill(bill.id)}
+                          onClick={() =>
+                            setPendingDelete({ id: bill.id, merchant: bill.merchant })
+                          }
                           className="rt2-focus rt2-btn-danger inline-flex min-h-[40px] items-center gap-1 rounded px-3 text-[14px] font-bold"
                         >
                           <Trash size={15} weight="bold" />
@@ -299,6 +323,14 @@ function AdminBillsPage() {
                         >
                           View
                           <CaretRight size={14} weight="bold" />
+                        </Link>
+                        <Link
+                          to="/admin/bills/$billId/edit"
+                          params={{ billId: bill.id }}
+                          className="rt2-focus rt2-btn-secondary inline-flex min-h-[40px] items-center gap-1.5 rounded px-3 text-[14px] font-bold"
+                        >
+                          <PencilSimple size={15} weight="bold" />
+                          Edit
                         </Link>
                         <button
                           type="button"
@@ -328,6 +360,49 @@ function AdminBillsPage() {
           </div>
         )}
       </section>
+
+      <Dialog
+        open={pendingDelete !== null}
+        onOpenChange={(open) => {
+          if (!open && !deleting) setPendingDelete(null)
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete this draft?</DialogTitle>
+            <DialogDescription>
+              {pendingDelete?.merchant} and its items, players and receipt will
+              be permanently deleted. This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex items-center justify-end gap-2 pt-2">
+            <DialogClose
+              disabled={deleting}
+              className="rt2-focus rt2-btn-secondary min-h-[42px] rounded px-4 text-[14px] font-bold"
+            >
+              Keep draft
+            </DialogClose>
+            <button
+              type="button"
+              disabled={deleting}
+              onClick={async () => {
+                if (!pendingDelete) return
+                setDeleting(true)
+                try {
+                  await deleteDraftBill(pendingDelete.id)
+                } finally {
+                  setDeleting(false)
+                  setPendingDelete(null)
+                }
+              }}
+              className="rt2-focus rt2-btn-danger inline-flex min-h-[42px] items-center gap-1.5 rounded px-4 text-[14px] font-bold"
+            >
+              <Trash size={15} weight="bold" />
+              {deleting ? "Deleting..." : "Delete draft"}
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </AdminShell>
   )
 }
