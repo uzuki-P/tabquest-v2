@@ -27,6 +27,14 @@ deploy: build
 test:
     bun test
 
+# Run Playwright E2E tests against the local dev server; API calls are mocked, no D1 data needed (pass extra Playwright args).
+e2e *args:
+    bunx playwright test {{args}}
+
+# Install the Chromium build Playwright needs (run once per Playwright upgrade).
+e2e-install:
+    bunx playwright install chromium-headless-shell
+
 # Run TypeScript type checking.
 typecheck:
     bun run typecheck

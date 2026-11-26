@@ -156,6 +156,7 @@ If left unset, OCR cleanly returns `503` while manual receipt entry and redactio
 
 ```bash
 just check        # TypeScript typecheck + Oxlint + Bun unit/schema/service tests
+just e2e          # Playwright E2E against the local dev server with mocked API data (run `just e2e-install` once)
 just build        # Production Cloudflare Workers bundle
 just db-generate  # Generate Drizzle SQL migrations from src/db/schema.ts
 ```

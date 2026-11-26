@@ -76,6 +76,7 @@ import { useAppStore, useOptionalAppStore } from "@/lib/app-store"
 import type { HitEvent, ThemePreference } from "@/lib/app-store"
 import { DEFAULT_BRANDING } from "@/lib/branding"
 import { todayJakarta } from "@/lib/time"
+import { LOADING_QUIPS, createLoadingQuipClock } from "./loading-quips"
 
 const MONTH_NAMES = [
   "January",
@@ -1411,32 +1412,25 @@ export function MonthStepper({
 /* ================================================================
    AppHeader - Header 1 (Command bar) with Real Router Links & Better Auth
    ================================================================ */
-const LOADING_QUIPS = [
-  "Splitting the delivery fee to the last rupiah...",
-  "Calculating who ordered the extra nasi...",
-  "Summoning the lunch raid boss...",
-  "Rounding up for the tip jar...",
-  "Tracking down unpaid squadmates...",
-  "Negotiating with the promo voucher...",
-  "Charging up the HP bar...",
-  "Checking who holds #1 on the Tip Rank...",
-  "Polishing the receipt for OCR...",
-  "Assigning leftover Rp1 to the rounding hero...",
-  "Counting change in the office tip jar...",
-  "Preparing your lunch dossier...",
-]
+const loadingQuipClock = createLoadingQuipClock()
 
 export function PageLoading({ label = "Loading..." }: { label?: string }) {
   const store = useOptionalAppStore()
   const iconUrl = store?.branding.iconUrl ?? DEFAULT_BRANDING.iconUrl
-  const [quipIndex, setQuipIndex] = useState(0)
+  const [quipIndex, setQuipIndex] = useState(() =>
+    loadingQuipClock.indexForMount()
+  )
 
   useEffect(() => {
-    setQuipIndex(Math.floor(Math.random() * LOADING_QUIPS.length))
-    const timer = window.setInterval(() => {
-      setQuipIndex((prev) => (prev + 1) % LOADING_QUIPS.length)
-    }, 2200)
-    return () => window.clearInterval(timer)
+    let timeoutId: number | undefined
+    const schedule = (delay: number) => {
+      timeoutId = window.setTimeout(() => {
+        setQuipIndex(loadingQuipClock.advance())
+        schedule(loadingQuipClock.msUntilNext())
+      }, delay)
+    }
+    schedule(loadingQuipClock.markMounted())
+    return () => window.clearTimeout(timeoutId)
   }, [])
 
   return (
@@ -1455,7 +1449,10 @@ export function PageLoading({ label = "Loading..." }: { label?: string }) {
         />
       </div>
       <div className="space-y-1">
-        <p className="font-arcade-mono text-[15px] font-bold text-[var(--rt-ink)] sm:text-[16px]">
+        <p
+          data-testid="loading-quip"
+          className="font-arcade-mono text-[15px] font-bold text-[var(--rt-ink)] sm:text-[16px]"
+        >
           {LOADING_QUIPS[quipIndex]}
         </p>
         <p className="text-[13px] text-[var(--rt-muted)]">{label}</p>

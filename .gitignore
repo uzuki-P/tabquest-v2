@@ -16,3 +16,5 @@ wrangler.prod.jsonc
 !drizzle/*.sql
 data/
 .DS_Store
+test-results/
+playwright-report/
