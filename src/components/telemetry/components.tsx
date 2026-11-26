@@ -450,7 +450,9 @@ export function HpBarLegend({ className = "" }: { className?: string }) {
         Your unpaid
       </span>
       <span className="inline-flex items-center gap-1.5">
-        <span className="inline-block h-4 w-4 rounded-sm bg-[var(--rt-chunk-other)]" />
+        <span className="inline-flex h-4 w-4 items-center justify-center rounded-sm bg-[var(--rt-chunk-other)] text-white">
+          <Warning size={11} weight="bold" />
+        </span>
         Other unpaid
       </span>
     </div>
