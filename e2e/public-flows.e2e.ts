@@ -56,7 +56,7 @@ test("theme choice applies immediately and survives a reload", async ({ page }) 
 })
 
 test.describe("home", () => {
-  test("picking a callsign updates the pay card and is remembered", async ({ page }) => {
+  test("picking a callsign updates the pay card and is remembered", { tag: "@critical" }, async ({ page }) => {
     await page.goto("/")
     await waitForLoaded(page)
     const roster = page.getByRole("region", { name: "Who are you?" })
@@ -64,7 +64,7 @@ test.describe("home", () => {
     await chip.click()
     await expect(chip).toHaveAttribute("aria-pressed", "true")
     await expect(page.getByText(`Pay all (${DOSSIER_PLAYER.name})`)).toBeVisible()
-    await expect(page.getByRole("link", { name: `Open ${DOSSIER_PLAYER.name}’s dossier` })).toBeVisible()
+    await expect(page.getByRole("link", { name: `${DOSSIER_PLAYER.name}’s dossier` })).toBeVisible()
 
     await page.reload()
     await waitForLoaded(page)
@@ -182,7 +182,7 @@ test.describe("player dossier", () => {
     await page.addInitScript((id) => localStorage.setItem("tq-selected-player", id), DOSSIER_PLAYER.id)
     await page.goto("/")
     await waitForLoaded(page)
-    await page.getByRole("link", { name: `Open ${DOSSIER_PLAYER.name}’s dossier` }).click()
+    await page.getByRole("link", { name: `${DOSSIER_PLAYER.name}’s dossier` }).click()
     await expect(page).toHaveURL(new RegExp(`/players/${DOSSIER_PLAYER.id}$`))
     await waitForLoaded(page)
     await expect(page.getByRole("heading", { level: 1, name: DOSSIER_PLAYER.name })).toBeVisible()
@@ -192,7 +192,10 @@ test.describe("player dossier", () => {
   test("home lists open bills from the feed", async ({ page }) => {
     await page.goto("/")
     await waitForLoaded(page)
-    await expect(page.getByRole("heading", { level: 1, name: `Bills to pay (${latestHome.unpaidBills.length} open)` })).toBeVisible()
+    await expect(page.getByRole("heading", { level: 1, name: "Bills to pay" })).toBeVisible()
+    for (const bill of latestHome.unpaidBills) {
+      await expect(page.locator("#bills").getByText(bill.merchant, { exact: true }).first()).toBeVisible()
+    }
   })
 })
 

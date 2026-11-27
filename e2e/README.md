@@ -4,7 +4,8 @@ Playwright tests against the Vite dev server, in desktop and mobile (390px) Chro
 
 ```bash
 just e2e-install   # once per Playwright upgrade
-just e2e           # all specs; extra args go to Playwright, e.g. just e2e -g "edit bill"
+just e2e-critical  # fast desktop check for critical flows + home accessibility smoke
+just e2e           # full desktop + mobile suite (also runs in CI before deploy); extra args go to Playwright, e.g. just e2e -g "edit bill"
 ```
 
 ## How it works

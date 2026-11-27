@@ -31,9 +31,9 @@ test:
 e2e *args:
     bunx playwright test {{args}}
 
-# Run only critical-flow Playwright E2E tests (auth/linking, bill create/edit/publish, transfer claims, Collect All, primary nav).
+# Run only critical-flow Playwright E2E tests on desktop (fast dev check; pass --project=mobile to include mobile).
 e2e-critical *args:
-    bunx playwright test --grep @critical {{args}}
+    bunx playwright test --grep @critical --project=desktop {{args}}
 
 # Install the Chromium build Playwright needs (run once per Playwright upgrade).
 e2e-install:

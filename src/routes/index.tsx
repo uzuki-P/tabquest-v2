@@ -147,6 +147,7 @@ function HomePage() {
                 <Link
                   to="/players/$playerId"
                   params={{ playerId: you.id }}
+                  aria-label={`${you.name}’s dossier`}
                   className="rt2-focus inline-flex min-h-[32px] cursor-pointer items-center gap-1.5 text-[14px] font-bold text-[var(--rt-accent-ink)] hover:underline"
                 >
                   <PlayerAvatar player={you} size="sm" />
@@ -229,7 +230,7 @@ function HomePage() {
                           ? "border-[var(--rt-ui-border)] bg-[var(--rt-surface-alt)] py-1 pr-2.5 pl-1 text-[var(--rt-ink)] hover:border-[var(--rt-teal)]"
                           : isSelf
                             ? "border-[var(--rt-accent)]/75 bg-transparent p-0.5 text-[var(--rt-ink)] hover:scale-105"
-                            : "border-transparent bg-transparent p-0.5 text-[var(--rt-ink)] opacity-85 hover:scale-110 hover:opacity-100"
+                            : "border-transparent bg-transparent p-0.5 text-[var(--rt-ink)] hover:scale-110"
                     }`}
                   >
                     <span className="relative shrink-0">

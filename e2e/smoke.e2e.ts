@@ -14,10 +14,12 @@ interface PageCase {
   heading: string | RegExp
   /** Expected 404s for not-found pages. */
   notFound?: boolean
+  /** Included in the fast `@critical` dev check. */
+  critical?: boolean
 }
 
 const PUBLIC_PAGES: PageCase[] = [
-  { name: "home", path: "/", heading: /Bills to pay/ },
+  { name: "home", path: "/", heading: /Bills to pay/, critical: true },
   { name: "bills", path: "/bills", heading: /^\w+ \d{4} bills$/ },
   { name: "ranks", path: "/ranks", heading: "All ranks" },
   { name: "bill detail", path: `/b/${DETAIL_BILL.publicId}`, heading: DETAIL_BILL.merchant },
@@ -44,7 +46,10 @@ function definePageTests(pages: PageCase[]) {
       test.describe(() => {
         if (pc.notFound) test.use({ allowedErrors: NOT_FOUND_ERRORS })
 
-        test(`${pc.name} renders accessibly (${theme})`, async ({ page }) => {
+        test(
+          `${pc.name} renders accessibly (${theme})`,
+          pc.critical ? { tag: "@critical" } : {},
+          async ({ page }) => {
           await page.addInitScript((t) => {
             localStorage.setItem("tq-theme-pref", t)
           }, theme)

@@ -2,7 +2,7 @@
 
 Run `just check` (`tsc --noEmit`, `oxlint`, and `bun test`) after code changes. Many project rules are enforced automatically via [.oxlintrc.json](.oxlintrc.json) and guard tests ([src/db/schema-guards.test.ts](src/db/schema-guards.test.ts), [src/db/code-guards.test.ts](src/db/code-guards.test.ts), [src/db/migrations.test.ts](src/db/migrations.test.ts), and [src/components/ui-guards.test.ts](src/components/ui-guards.test.ts)).
 
-**E2E policy (critical flows only):** Do not run the full Playwright suite or add E2E specs for every change. Only add or run `just e2e-critical` when changing critical flows (sign-in & player linking, bill creation/editing/publishing, transfer claims & Admin Collect All, or primary route navigation). For visual polish, animations, badges, hover cards, and layout tweaks, rely on `just check` and fast `bun test` unit tests instead.
+**E2E policy (critical flows only):** Do not run the full Playwright suite or add E2E specs for every change. During development, run `just check` for routine changes and `just e2e-critical` (fast desktop critical flows + home accessibility smoke) when changing critical flows (home roster/pay card, sign-in & player linking, bill creation/editing/publishing, transfer claims & Admin Collect All, or primary route navigation). CI runs the full desktop + mobile `just e2e` suite on `main` before deploy. For visual polish, animations, badges, hover cards, and layout tweaks, rely on `just check` and fast `bun test` unit tests instead.
 
 Read the relevant guide before working in that area:
 

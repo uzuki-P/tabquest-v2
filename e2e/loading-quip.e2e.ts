@@ -110,7 +110,7 @@ test.describe("slow player data", () => {
     await page.goto("/")
 
     const playerLink = page.getByRole("link", {
-      name: `Open ${DOSSIER_PLAYER.name}’s dossier`,
+      name: `${DOSSIER_PLAYER.name}’s dossier`,
     })
     await expect(playerLink).toBeVisible({ timeout: 20_000 })
     await playerLink.click()
