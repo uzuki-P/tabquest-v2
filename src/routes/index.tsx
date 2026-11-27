@@ -235,14 +235,6 @@ function HomePage() {
                   >
                     <span className="relative inline-flex shrink-0">
                       <PlayerAvatar player={p} size="sm" />
-                      <span
-                        aria-hidden="true"
-                        className={`absolute -right-0.5 -bottom-0.5 h-2.5 w-2.5 rounded-full border-2 border-[var(--rt-surface)] bg-[var(--rt-teal)] transition-[opacity,transform] duration-200 ${
-                          showLabel
-                            ? "scale-0 opacity-0"
-                            : "scale-100 opacity-100"
-                        }`}
-                      />
                     </span>
 
                     <span

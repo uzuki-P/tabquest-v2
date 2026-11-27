@@ -10,6 +10,7 @@ import { useEffect } from "react"
 import type { ReactNode } from "react"
 
 import { DevBadge } from "@/components/DevBadge"
+import { FirstVisitDialog } from "@/components/telemetry/FirstVisitDialog"
 import { IdentifyPlayerDialog } from "@/components/telemetry/IdentifyPlayerDialog"
 import { StandingCelebration } from "@/components/telemetry/StandingCelebration"
 import {
@@ -220,6 +221,7 @@ function AppShell() {
         </div>
       )}
 
+      <FirstVisitDialog />
       <IdentifyPlayerDialog />
       <StandingCelebration />
 

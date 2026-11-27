@@ -19,6 +19,7 @@ import type { PlayerSummary } from "@/domain/types"
 import { useAppStore } from "@/lib/app-store"
 
 import { PlayerAvatar } from "./components"
+import { ScrollFade } from "./ScrollFade"
 
 function matchesAccountName(
   playerName: string,
@@ -114,7 +115,7 @@ export function IdentifyPlayerDialog() {
         }
       }}
     >
-      <DialogContent className="rt2-scroll-fade-y max-h-[92dvh] gap-4 overflow-y-auto p-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:max-w-lg">
+      <DialogContent className="max-h-[92dvh] gap-4 overflow-y-auto p-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:max-w-lg">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <DialogTitle className="rt2-display text-2xl font-extrabold sm:text-3xl">
@@ -175,10 +176,10 @@ export function IdentifyPlayerDialog() {
             </p>
           </div>
         ) : (
-          <div
+          <ScrollFade
             role="radiogroup"
             aria-label="Select your player profile"
-            className="rt2-scroll-fade-y grid max-h-[42dvh] grid-cols-1 gap-2 overflow-y-auto p-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:grid-cols-2"
+            className="grid max-h-[42dvh] grid-cols-1 gap-2 p-0.5 sm:grid-cols-2"
           >
             {filteredPlayers.map((p) => {
               const selected = p.id === selectedId
@@ -243,7 +244,7 @@ export function IdentifyPlayerDialog() {
                 </button>
               )
             })}
-          </div>
+          </ScrollFade>
         )}
 
         {errorMessage && (

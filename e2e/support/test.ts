@@ -9,6 +9,8 @@ export { expect }
 interface Fixtures {
   /** Options for the API mock; override with `test.use({ api: { as: "admin" } })`. */
   api: MockOptions
+  /** When false (default), marks the first-visit welcome modal seen so tests can interact immediately. */
+  firstVisit: boolean
   /** The installed API mock (records mutations). */
   mock: ApiMock
   /** Console/page errors matching these are expected and do not fail the test. */
@@ -21,9 +23,15 @@ interface Fixtures {
  */
 export const test = base.extend<Fixtures>({
   api: [{}, { option: true }],
+  firstVisit: [false, { option: true }],
   allowedErrors: [[], { option: true }],
   mock: [
-    async ({ page, api, allowedErrors }, use) => {
+    async ({ page, api, firstVisit, allowedErrors }, use) => {
+      if (!firstVisit) {
+        await page.addInitScript(() => {
+          localStorage.setItem("tq-welcome-seen", "1")
+        })
+      }
       const errors: string[] = []
       page.on("pageerror", (e) => errors.push(`pageerror: ${e.message}`))
       page.on("console", (msg) => {

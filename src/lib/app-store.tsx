@@ -42,8 +42,41 @@ export type HitEvent = {
 
 const THEME_STORAGE_KEY = "tq-theme-pref"
 const CALLSIGN_STORAGE_KEY = "tq-selected-player"
+const WELCOME_SEEN_STORAGE_KEY = "tq-welcome-seen"
 const IDENTIFY_DISMISSED_PREFIX = "tq-identify-dismissed:"
 const STANDING_SEEN_STORAGE_KEY = "tq-seen-standing-change"
+
+function hasSavedCallsign(): boolean {
+  try {
+    return Boolean(window.localStorage.getItem(CALLSIGN_STORAGE_KEY))
+  } catch {
+    return false
+  }
+}
+
+function isWelcomeSeen(): boolean {
+  try {
+    return window.localStorage.getItem(WELCOME_SEEN_STORAGE_KEY) === "1"
+  } catch {
+    return false
+  }
+}
+
+function markWelcomeSeen(): void {
+  try {
+    window.localStorage.setItem(WELCOME_SEEN_STORAGE_KEY, "1")
+  } catch {
+    // ignore storage errors
+  }
+}
+
+function clearWelcomeSeen(): void {
+  try {
+    window.localStorage.removeItem(WELCOME_SEEN_STORAGE_KEY)
+  } catch {
+    // ignore storage errors
+  }
+}
 
 function readSeenStandingChangeId(): string | null {
   try {
@@ -158,6 +191,11 @@ interface AppStoreValue {
   identifyModalOpen: boolean
   openIdentifyModal: () => void
   dismissIdentifyModal: () => void
+  welcomeModalOpen: boolean
+  welcomeSimulated: boolean
+  openWelcomeModal: (options?: { simulated?: boolean }) => void
+  dismissWelcomeModal: () => void
+  simulateFirstVisit: () => void
   latestStandingChange: StandingChangeSummary | null
   standingBannerOpen: boolean
   standingModalOpen: boolean
@@ -298,6 +336,8 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   const [systemDark, setSystemDark] = useState<boolean>(false)
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false)
   const [identifyModalOpen, setIdentifyModalOpen] = useState<boolean>(false)
+  const [welcomeModalOpen, setWelcomeModalOpen] = useState<boolean>(false)
+  const [welcomeSimulated, setWelcomeSimulated] = useState<boolean>(false)
   const [latestStandingChange, setLatestStandingChange] =
     useState<StandingChangeSummary | null>(null)
   const [seenStandingChangeId, setSeenStandingChangeId] = useState<
@@ -342,6 +382,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     } catch {
       // ignore storage errors
     }
+    markWelcomeSeen()
   }, [])
 
   // Theme initialization
@@ -511,6 +552,33 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     me.linkedPlayerId,
   ])
 
+  // Prompt first-time guest visitors to pick their name or sign in
+  useEffect(() => {
+    if (authPending || !meLoaded || loading) return
+    if (welcomeSimulated) return
+    if (me.authenticated) {
+      setWelcomeModalOpen(false)
+      return
+    }
+    if (
+      typeof window !== "undefined" &&
+      window.location.pathname.startsWith("/admin")
+    ) {
+      return
+    }
+    if (players.length === 0) return
+    if (!hasSavedCallsign() && !isWelcomeSeen()) {
+      setWelcomeModalOpen(true)
+    }
+  }, [
+    authPending,
+    meLoaded,
+    loading,
+    me.authenticated,
+    players.length,
+    welcomeSimulated,
+  ])
+
   // Hydrate last seen standing change ID from localStorage once on mount
   useEffect(() => {
     setSeenStandingChangeId(readSeenStandingChangeId())
@@ -546,7 +614,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
 
   // Show the celebratory banner once per unseen notable standing change
   useEffect(() => {
-    if (loading || !latestStandingChange || identifyModalOpen) return
+    if (loading || !latestStandingChange || identifyModalOpen || welcomeModalOpen) return
     const storedSeen = readSeenStandingChangeId()
     if (storedSeen === latestStandingChange.id) return
 
@@ -568,6 +636,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     loading,
     latestStandingChange,
     identifyModalOpen,
+    welcomeModalOpen,
     me.authenticated,
     me.linkedPlayerId,
     activePlayerId,
@@ -584,6 +653,23 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       markIdentifyDismissed(me.user.id)
     }
   }, [me.user?.id])
+
+  const openWelcomeModal = useCallback((options?: { simulated?: boolean }) => {
+    setWelcomeSimulated(Boolean(options?.simulated))
+    setWelcomeModalOpen(true)
+  }, [])
+
+  const dismissWelcomeModal = useCallback(() => {
+    setWelcomeModalOpen(false)
+    setWelcomeSimulated(false)
+    markWelcomeSeen()
+  }, [])
+
+  const simulateFirstVisit = useCallback(() => {
+    clearWelcomeSeen()
+    setWelcomeSimulated(true)
+    setWelcomeModalOpen(true)
+  }, [])
 
   const setSelectedMonth = useCallback(
     (month: string) => {
@@ -1292,6 +1378,11 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         identifyModalOpen,
         openIdentifyModal,
         dismissIdentifyModal,
+        welcomeModalOpen,
+        welcomeSimulated,
+        openWelcomeModal,
+        dismissWelcomeModal,
+        simulateFirstVisit,
         latestStandingChange,
         standingBannerOpen,
         standingModalOpen,

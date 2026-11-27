@@ -77,6 +77,7 @@ import type { HitEvent, ThemePreference } from "@/lib/app-store"
 import { DEFAULT_BRANDING } from "@/lib/branding"
 import { todayJakarta } from "@/lib/time"
 import { LOADING_QUIPS, createLoadingQuipClock } from "./loading-quips"
+import { ScrollFade } from "./ScrollFade"
 
 const MONTH_NAMES = [
   "January",
@@ -1786,7 +1787,7 @@ export function AdminCollectDrawer({
           </DialogClose>
         </div>
 
-        <div className="rt2-scroll-fade-y mt-2 flex-1 space-y-4 overflow-y-auto py-3">
+        <ScrollFade className="mt-2 flex-1 space-y-4 py-3">
           {debtors.length === 0 ? (
             <p className="py-10 text-center text-[16px] font-bold text-[var(--rt-teal-ink)]">
               Every player is settled up.
@@ -1931,7 +1932,7 @@ export function AdminCollectDrawer({
               )
             })
           )}
-        </div>
+        </ScrollFade>
       </SheetContent>
     </Dialog>
   )

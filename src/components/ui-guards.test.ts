@@ -33,8 +33,22 @@ describe("UI, mobile & accessibility guards", () => {
         if (!/\boverflow-(?:y-)?auto\b/.test(line)) continue
         const hasHiddenScrollbar =
           line.includes("[scrollbar-width:none]") ||
-          line.includes("rt2-scroll-fade-y")
+          line.includes("rt2-scroll-clean")
         if (!hasHiddenScrollbar) {
+          violations.push(`${relative(SRC_ROOT, file)}:${i + 1}: ${line.trim()}`)
+        }
+      }
+    }
+    expect(violations).toEqual([])
+  })
+
+  it("never applies static scroll fade masks onto DialogContent surfaces", () => {
+    const violations: string[] = []
+    for (const file of files) {
+      const lines = readFileSync(file, "utf8").split("\n")
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i]
+        if (line.includes("rt2-scroll-fade-y")) {
           violations.push(`${relative(SRC_ROOT, file)}:${i + 1}: ${line.trim()}`)
         }
       }

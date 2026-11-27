@@ -185,27 +185,6 @@ html[data-theme="dark"] .rt2-root {
 .rt2-scroll-clean::-webkit-scrollbar {
   display: none;
 }
-.rt2-scroll-fade-y {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  -webkit-mask-image: linear-gradient(
-    to bottom,
-    transparent 0,
-    #000 16px,
-    #000 calc(100% - 16px),
-    transparent 100%
-  );
-  mask-image: linear-gradient(
-    to bottom,
-    transparent 0,
-    #000 16px,
-    #000 calc(100% - 16px),
-    transparent 100%
-  );
-}
-.rt2-scroll-fade-y::-webkit-scrollbar {
-  display: none;
-}
 .rt2-scroll-fade-x {
   scrollbar-width: none;
   -ms-overflow-style: none;

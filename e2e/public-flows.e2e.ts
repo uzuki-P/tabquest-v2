@@ -199,6 +199,43 @@ test.describe("player dossier", () => {
   })
 })
 
+test.describe("first-visit welcome prompt", () => {
+  test.use({ firstVisit: true })
+
+  test("requires picking a player or signing in on first visit, remembers selection, and supports dev simulate", { tag: "@critical" }, async ({ page }) => {
+    await page.goto("/")
+    await waitForLoaded(page)
+
+    const dialog = page.getByRole("dialog", { name: "Who are you?" })
+    await expect(dialog).toBeVisible()
+    await expect(dialog.getByRole("button", { name: "Sign in" })).toBeVisible()
+
+    // Cannot skip with Escape
+    await page.keyboard.press("Escape")
+    await expect(dialog).toBeVisible()
+
+    // Picking a player closes the dialog, updates Pay all, and persists across reload
+    await dialog
+      .getByRole("button", { name: new RegExp(`\\b${DOSSIER_PLAYER.name}\\b`) })
+      .click()
+    await expect(dialog).toBeHidden()
+    await expect(page.getByText(`Pay all (${DOSSIER_PLAYER.name})`)).toBeVisible()
+
+    await page.reload()
+    await waitForLoaded(page)
+    await expect(dialog).toBeHidden()
+
+    // Dev simulate button reopens the first-visit prompt even after completion
+    await page.getByRole("button", { name: "1st visit" }).click()
+    await expect(dialog).toBeVisible()
+    await expect(dialog.getByText("Dev preview")).toBeVisible()
+    await dialog
+      .getByRole("button", { name: new RegExp(`\\b${DOSSIER_PLAYER.name}\\b`) })
+      .click()
+    await expect(dialog).toBeHidden()
+  })
+})
+
 test.describe("first-login self-identification", () => {
   test("prompts an unlinked signed-in user to identify themselves and links their chosen player", { tag: "@critical" }, async ({ page }) => {
     const api = await mockApi(page, { as: "unlinked" })

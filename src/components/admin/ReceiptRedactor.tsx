@@ -8,6 +8,7 @@ import { useRef, useState } from "react"
 import type { DragEvent as ReactDragEvent } from "react"
 
 import { ReceiptImageEditorDialog } from "@/components/admin/ReceiptImageEditorDialog"
+import { ScrollFade } from "@/components/telemetry/ScrollFade"
 import { formatRupiah } from "@/domain/money"
 import type { ImageEdits } from "@/lib/image-edits"
 
@@ -307,7 +308,7 @@ export function ReceiptRedactor({
               </span>
             )}
           </div>
-          <div className="rt2-scroll-fade-y mt-2 max-h-72 space-y-2 overflow-y-auto py-2">
+          <ScrollFade className="mt-2 max-h-72 space-y-2 py-2">
             {boxes.length === 0 ? (
               <p className="rounded border border-dashed border-[var(--rt-ui-border)] p-3 text-[13px] text-[var(--rt-muted)]">
                 No censor boxes yet. Open the fullscreen editor to black out
@@ -340,7 +341,7 @@ export function ReceiptRedactor({
                 </div>
               ))
             )}
-          </div>
+          </ScrollFade>
         </div>
       </div>
 
