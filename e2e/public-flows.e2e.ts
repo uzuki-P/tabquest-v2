@@ -82,8 +82,8 @@ test.describe("home", () => {
     await expect(page.getByRole("button", { name: "Copied" })).toBeVisible()
     expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(String(owed))
 
-    await page.getByRole("button", { name: "Pay & report" }).click()
-    const dialog = page.getByRole("dialog", { name: "Pay & report" })
+    await page.getByRole("button", { name: "Pay & confirm" }).click()
+    const dialog = page.getByRole("dialog", { name: "Pay & confirm" })
     await expect(dialog).toBeVisible()
     await expect(dialog.getByText(`${DOSSIER_PLAYER.name} owes ${rupiah(owed)}`)).toBeVisible()
     await expect(dialog.getByRole("button", { name: "Sign in to notify" })).toBeVisible()

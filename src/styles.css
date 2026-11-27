@@ -55,7 +55,7 @@
   --rt-tip-bg: #1F2329;
   --rt-tip-ink: #F7F4EC;
   --rt-tip-muted: #C5CCD6;
-  --rt-chunk-paid: #0B7F78;
+  --rt-chunk-paid: #3A7D78;
   --rt-chunk-unpaid: #C2410C;
   --rt-chunk-pending: #8A6500;
   --rt-chunk-pending-fg: #FFFFFF;
@@ -91,7 +91,7 @@ html[data-theme="dark"] {
   --rt-tip-bg: #0B0E12;
   --rt-tip-ink: #EEF2F6;
   --rt-tip-muted: #C5CCD6;
-  --rt-chunk-paid: #22C3B8;
+  --rt-chunk-paid: #1F6E6A;
   --rt-chunk-unpaid: #FF6B35;
   --rt-chunk-pending: #F5C32E;
   --rt-chunk-pending-fg: #12161B;

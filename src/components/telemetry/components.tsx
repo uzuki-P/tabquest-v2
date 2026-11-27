@@ -996,7 +996,7 @@ export function PayAllCard({
                     claim ? "rt2-btn-secondary" : "rt2-btn-primary"
                   }`}
                 >
-                  {claim ? "View details" : "Pay & report"}
+                  {claim ? "View details" : "Pay & confirm"}
                 </button>
               </div>
 
@@ -1025,7 +1025,7 @@ export function PayAllCard({
               {paymentMethods.length > 0 && (
                 <div className="space-y-1.5">
                   <p className="text-[13px] font-bold text-[var(--rt-muted)]">
-                    Transfer to ({paymentMethods.length})
+                    Transfer to
                   </p>
                   {paymentMethods.map((m) => {
                     const isCopied = copiedMethodId === m.id
@@ -1073,7 +1073,7 @@ export function PayAllCard({
         <DialogContent className="max-h-[96dvh] gap-3 overflow-y-auto p-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:max-w-2xl">
           <div className="flex items-baseline justify-between gap-3">
             <DialogTitle className="rt2-display text-xl font-extrabold">
-              Pay &amp; report
+              Pay &amp; confirm
             </DialogTitle>
             <DialogDescription className="truncate text-[13px] text-[var(--rt-muted)]">
               {player.name} owes {formatRupiah(owed)}
@@ -1241,7 +1241,7 @@ export function PayAllCard({
           {paymentMethods.length > 0 && (
             <div className="space-y-1.5">
               <p className="text-[12px] font-bold uppercase tracking-wider text-[var(--rt-muted)]">
-                Transfer to ({paymentMethods.length})
+                Transfer to
               </p>
               <ul className="divide-y divide-[var(--rt-border-soft)] rounded border border-[var(--rt-border-soft)] bg-[var(--rt-bg)]/60">
                 {paymentMethods.map((m) => {
@@ -1513,8 +1513,6 @@ export function AppHeader({
     branding,
     me,
     players,
-    you,
-    setActivePlayerId,
     authPending,
     signingIn,
     openIdentifyModal,
@@ -1530,16 +1528,6 @@ export function AppHeader({
   const linkedPlayer = me.linkedPlayerId
     ? (players.find((p) => p.id === me.linkedPlayerId) ?? null)
     : null
-  const isViewingOther = Boolean(
-    isHome && me.linkedPlayerId && you && you.id !== me.linkedPlayerId
-  )
-  const sortedNavPlayers = [...players].sort((a, b) => {
-    const unpaidDiff = getPlayerUnpaidTotal(b) - getPlayerUnpaidTotal(a)
-    if (unpaidDiff !== 0) return unpaidDiff
-    const countDiff = b.unpaidBills.length - a.unpaidBills.length
-    if (countDiff !== 0) return countDiff
-    return a.name.localeCompare(b.name)
-  })
 
   return (
     <header className="sticky top-0 z-30 border-b-2 border-[var(--rt-border)] bg-[var(--rt-topbar-bg)] text-[var(--rt-topbar-ink)]">
@@ -1607,53 +1595,8 @@ export function AppHeader({
           </nav>
         </div>
 
-        {/* Right: Guest callsign switcher + Collect (admin) + Theme Popover + Auth Account */}
+        {/* Right: Theme Popover + Auth Account */}
         <div className="relative flex flex-wrap items-center gap-2">
-          {!me.authenticated && you && sortedNavPlayers.length > 0 && (
-            <Select
-              value={you.id}
-              onValueChange={(next) => {
-                if (typeof next === "string" && next) setActivePlayerId(next)
-              }}
-            >
-              <SelectTrigger
-                aria-label="Switch active callsign"
-                className="h-[40px] max-w-[180px] border border-white/25 bg-white/8 px-2.5 text-[13px] font-bold text-[var(--rt-topbar-ink)] shadow-none hover:bg-white/15"
-              >
-                <SelectValue>
-                  <span className="flex min-w-0 items-center gap-2">
-                    <PlayerAvatar player={you} size="sm" />
-                    <span className="truncate">{you.name}</span>
-                  </span>
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent align="end" className="min-w-[250px]">
-                {sortedNavPlayers.map((p) => {
-                  const pOwed = getPlayerUnpaidTotal(p)
-                  return (
-                    <SelectItem key={p.id} value={p.id}>
-                      <span className="flex w-full items-center justify-between gap-3">
-                        <span className="flex min-w-0 items-center gap-2">
-                          <PlayerAvatar player={p} size="sm" />
-                          <span className="truncate">{p.name}</span>
-                        </span>
-                        <span
-                          className={`tnum shrink-0 font-arcade-mono text-[12px] font-semibold [[data-selected]_&]:text-current ${
-                            pOwed > 0
-                              ? "text-[var(--rt-accent-ink)]"
-                              : "text-[var(--rt-teal-ink)]"
-                          }`}
-                        >
-                          {pOwed > 0 ? formatRupiah(pOwed) : "Clear"}
-                        </span>
-                      </span>
-                    </SelectItem>
-                  )
-                })}
-              </SelectContent>
-            </Select>
-          )}
-
           {/* Theme Popover: System / Light / Dark */}
           <Popover open={themeMenuOpen} onOpenChange={setThemeMenuOpen}>
             <PopoverTrigger
@@ -1716,13 +1659,7 @@ export function AppHeader({
             </button>
           ) : (
             <Popover open={accountMenuOpen} onOpenChange={setAccountMenuOpen}>
-              <PopoverTrigger
-                className={`rt2-focus inline-flex min-h-[40px] cursor-pointer items-center gap-2 rounded border px-2.5 text-[14px] font-bold ${
-                  isViewingOther
-                    ? "border-[var(--rt-amber)] bg-[var(--rt-amber)]/15 hover:bg-[var(--rt-amber)]/22"
-                    : "border-white/25 bg-white/8 hover:bg-white/15"
-                }`}
-              >
+              <PopoverTrigger className="rt2-focus inline-flex min-h-[40px] cursor-pointer items-center gap-2 rounded border border-white/25 bg-white/8 px-2.5 text-[14px] font-bold hover:bg-white/15">
                 {linkedPlayer ? (
                   <PlayerAvatar player={linkedPlayer} size="sm" />
                 ) : (
@@ -1731,12 +1668,7 @@ export function AppHeader({
                 <span className="max-w-[110px] truncate">
                   {linkedPlayer?.name || me.user?.name || me.user?.email}
                 </span>
-                {isViewingOther && you && (
-                  <span className="hidden rounded bg-[var(--rt-amber)] px-1.5 py-0.5 font-arcade-mono text-[11px] font-bold text-[#12161B] sm:inline">
-                    Viewing {you.name}
-                  </span>
-                )}
-                {me.isAdmin && !isViewingOther && (
+                {me.isAdmin && (
                   <span className="rounded bg-[var(--rt-accent)] px-1.5 py-0.5 font-arcade-mono text-[11px] font-bold text-[var(--rt-accent-fg)]">
                     Admin
                   </span>
@@ -1759,76 +1691,6 @@ export function AppHeader({
                     {me.user?.email}
                   </p>
                 </div>
-
-                {/* Viewing as callsign switcher inside the account menu (Home only) */}
-                {isHome && you && sortedNavPlayers.length > 0 && (
-                  <div className="border-b border-[var(--rt-border-soft)] px-1.5 py-2.5">
-                    <div className="mb-1.5 flex items-center justify-between gap-2">
-                      <span className="text-[11px] font-bold tracking-wide text-[var(--rt-muted)] uppercase">
-                        Viewing as
-                      </span>
-                      {isViewingOther && me.linkedPlayerId && (
-                        <button
-                          type="button"
-                          onClick={() => setActivePlayerId(me.linkedPlayerId!)}
-                          className="rt2-focus cursor-pointer font-arcade-mono text-[11px] font-bold text-[var(--rt-accent-ink)] hover:underline"
-                        >
-                          Back to me
-                        </button>
-                      )}
-                    </div>
-                    <Select
-                      value={you.id}
-                      onValueChange={(next) => {
-                        if (typeof next === "string" && next) {
-                          setActivePlayerId(next)
-                        }
-                      }}
-                    >
-                      <SelectTrigger
-                        aria-label="Viewing as callsign"
-                        className="h-10 w-full px-2.5 text-[13px]"
-                      >
-                        <SelectValue>
-                          <span className="flex min-w-0 items-center gap-2">
-                            <PlayerAvatar player={you} size="sm" />
-                            <span className="truncate">{you.name}</span>
-                          </span>
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent align="end" className="min-w-[248px]">
-                        {sortedNavPlayers.map((p) => {
-                          const pOwed = getPlayerUnpaidTotal(p)
-                          const isSelf = me.linkedPlayerId === p.id
-                          return (
-                            <SelectItem key={p.id} value={p.id}>
-                              <span className="flex w-full items-center justify-between gap-3">
-                                <span className="flex min-w-0 items-center gap-2">
-                                  <PlayerAvatar player={p} size="sm" />
-                                  <span className="truncate">{p.name}</span>
-                                  {isSelf && (
-                                    <span className="rounded bg-[var(--rt-accent-soft)] px-1 py-0.5 font-arcade-mono text-[10px] font-bold text-[var(--rt-accent-ink)] uppercase [[data-selected]_&]:bg-black/20 [[data-selected]_&]:text-current">
-                                      You
-                                    </span>
-                                  )}
-                                </span>
-                                <span
-                                  className={`tnum shrink-0 font-arcade-mono text-[12px] font-semibold [[data-selected]_&]:text-current ${
-                                    pOwed > 0
-                                      ? "text-[var(--rt-accent-ink)]"
-                                      : "text-[var(--rt-teal-ink)]"
-                                  }`}
-                                >
-                                  {pOwed > 0 ? formatRupiah(pOwed) : "Clear"}
-                                </span>
-                              </span>
-                            </SelectItem>
-                          )
-                        })}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
 
                 <div className="mt-1.5 space-y-1">
                   {me.linkedPlayerId ? (

@@ -91,13 +91,20 @@ export function PlayerHoverCard({
   player,
   children,
   className = "",
+  placement = "auto",
 }: {
   player: PlayerSummary
   children: ReactNode
   className?: string
+  placement?: "auto" | "top" | "bottom"
 }) {
   const { players } = useAppStore()
   const [open, setOpen] = useState(false)
+  const [resolvedSide, setResolvedSide] = useState<"top" | "bottom">("bottom")
+  const [resolvedAlign, setResolvedAlign] = useState<"center" | "left" | "right">(
+    "center"
+  )
+  const triggerRef = useRef<HTMLSpanElement>(null)
   const timerRef = useRef<number | null>(null)
 
   const show = () => {
@@ -108,7 +115,25 @@ export function PlayerHoverCard({
       return
     }
     if (timerRef.current) window.clearTimeout(timerRef.current)
-    timerRef.current = window.setTimeout(() => setOpen(true), 160)
+    timerRef.current = window.setTimeout(() => {
+      const rect = triggerRef.current?.getBoundingClientRect()
+      if (rect) {
+        if (placement === "auto") {
+          setResolvedSide(rect.top < 260 ? "bottom" : "top")
+        } else {
+          setResolvedSide(placement)
+        }
+        const centerX = rect.left + rect.width / 2
+        if (centerX < 156) {
+          setResolvedAlign("left")
+        } else if (window.innerWidth - centerX < 156) {
+          setResolvedAlign("right")
+        } else {
+          setResolvedAlign("center")
+        }
+      }
+      setOpen(true)
+    }, 160)
   }
 
   const hide = () => {
@@ -126,8 +151,20 @@ export function PlayerHoverCard({
 
   const currentBadges = player.currentMonthBadges ?? []
 
+  const sideClass =
+    resolvedSide === "bottom"
+      ? "top-[calc(100%+8px)]"
+      : "bottom-[calc(100%+8px)]"
+  const alignClass =
+    resolvedAlign === "left"
+      ? "left-0"
+      : resolvedAlign === "right"
+        ? "right-0"
+        : "left-1/2 -translate-x-1/2"
+
   return (
     <span
+      ref={triggerRef}
       className={`relative inline-flex max-w-full ${className}`.trim()}
       onMouseEnter={show}
       onMouseLeave={hide}
@@ -139,7 +176,7 @@ export function PlayerHoverCard({
       {open && (
         <div
           role="tooltip"
-          className="rt2-tooltip-in pointer-events-none absolute bottom-[calc(100%+8px)] left-1/2 z-50 w-[290px] -translate-x-1/2 rounded border-2 border-[var(--rt-border)] bg-[var(--rt-surface)] p-3.5 text-left text-[var(--rt-ink)] shadow-2xl"
+          className={`rt2-tooltip-in pointer-events-none absolute ${sideClass} ${alignClass} z-50 w-[290px] rounded border-2 border-[var(--rt-border)] bg-[var(--rt-surface)] p-3.5 text-left text-[var(--rt-ink)] shadow-2xl`}
         >
           <div className="flex items-start justify-between gap-2.5">
             <div className="flex min-w-0 items-center gap-2.5">

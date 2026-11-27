@@ -1,11 +1,14 @@
 import {
+  ArrowCounterClockwise,
   ArrowRight,
   CaretRight,
   Check,
   Receipt,
   Trophy,
+  UsersThree,
 } from "@phosphor-icons/react"
 import { Link, createFileRoute } from "@tanstack/react-router"
+import { useState } from "react"
 
 import {
   CurrentMonthBadgeCue,
@@ -15,7 +18,6 @@ import { StandingShiftButton } from "@/components/telemetry/StandingCelebration"
 import {
   BillBossAvatar,
   HpBar,
-  HpBarLegend,
   PageLoading,
   PayAllCard,
   PlayerAvatar,
@@ -30,6 +32,7 @@ export const Route = createFileRoute("/")({
 })
 
 function HomePage() {
+  const [expandedRoster, setExpandedRoster] = useState(false)
   const {
     loading,
     players,
@@ -54,17 +57,21 @@ function HomePage() {
       you && b.splits.some((s) => s.playerId === you.id && s.status === "unpaid")
         ? 0
         : 1
-    return aMine - bMine
+    if (aMine !== bMine) return aMine - bMine
+    return a.merchant.localeCompare(b.merchant)
   })
 
   const sortedPlayers = [...players].sort((a, b) => {
-    const unpaidDiff = getPlayerUnpaidTotal(b) - getPlayerUnpaidTotal(a)
-    if (unpaidDiff !== 0) return unpaidDiff
-    const countDiff = b.unpaidBills.length - a.unpaidBills.length
-    if (countDiff !== 0) return countDiff
+    const aHasOpen = a.unpaidBills.length > 0 ? 0 : 1
+    const bHasOpen = b.unpaidBills.length > 0 ? 0 : 1
+    if (aHasOpen !== bHasOpen) return aHasOpen - bHasOpen
     return a.name.localeCompare(b.name)
   })
   const openDebtors = sortedPlayers.filter((p) => p.unpaidBills.length > 0)
+  const clearPlayers = sortedPlayers.filter((p) => p.unpaidBills.length === 0)
+  const isPeeking = Boolean(
+    me.linkedPlayerId && you && you.id !== me.linkedPlayerId
+  )
   const totalOutstanding = openDebtors.reduce(
     (s, p) => s + getPlayerUnpaidTotal(p),
     0
@@ -76,23 +83,21 @@ function HomePage() {
 
   return (
     <>
-      {/* Global Open Status Row (unpaid bills across all months) */}
-      <section className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--rt-border-soft)] pb-3.5 text-[15px]">
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-2.5 font-arcade-mono">
+      {/* Unified Telemetry Deck: Open total + controls + animated Avatar Rail */}
+      <section
+        aria-label="Who are you?"
+        className="rounded border-2 border-[var(--rt-ui-border)] bg-[var(--rt-surface)]"
+      >
+        {/* Integrated card header */}
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-t-[2px] border-b border-[var(--rt-border-soft)] bg-[var(--rt-surface-alt)]/55 px-3.5 py-2.5 sm:px-4">
           {openDebtors.length > 0 ? (
-            <div className="flex items-baseline gap-2.5">
+            <div className="flex items-baseline gap-2.5 font-arcade-mono">
               <span className="font-ui-sans text-[14px] font-semibold text-[var(--rt-muted)]">
                 Open total
               </span>
               <strong className="tnum text-[18px] text-[var(--rt-accent-ink)]">
                 {formatRupiah(totalOutstanding)}
               </strong>
-              <span className="font-ui-sans text-[14px] text-[var(--rt-muted)]">
-                ({openDebtors.length}{" "}
-                {openDebtors.length === 1 ? "player" : "players"},{" "}
-                {unpaidBills.length}{" "}
-                {unpaidBills.length === 1 ? "bill" : "bills"})
-              </span>
             </div>
           ) : (
             <span className="inline-flex items-center gap-1.5 font-ui-sans text-[15px] font-bold text-[var(--rt-teal-ink)]">
@@ -100,85 +105,158 @@ function HomePage() {
               All office bills are settled
             </span>
           )}
-        </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <StandingShiftButton />
-          {you && (
-            <Link
-              to="/players/$playerId"
-              params={{ playerId: you.id }}
-              className="rt2-focus inline-flex min-h-[40px] cursor-pointer items-center gap-2 text-[15px] font-bold text-[var(--rt-accent-ink)] hover:underline"
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                if (me.linkedPlayerId) setActivePlayerId(me.linkedPlayerId)
+              }}
+              aria-hidden={!isPeeking}
+              tabIndex={isPeeking ? 0 : -1}
+              className={`rt2-focus inline-flex min-h-[30px] items-center gap-1 rounded border border-[var(--rt-accent)] bg-[var(--rt-accent-soft)] px-2.5 font-arcade-mono text-[11px] font-bold text-[var(--rt-accent-ink)] transition-[opacity,background-color,color] duration-150 hover:bg-[var(--rt-accent)] hover:text-[var(--rt-accent-fg)] ${
+                isPeeking
+                  ? "cursor-pointer opacity-100"
+                  : "pointer-events-none invisible opacity-0"
+              }`}
             >
-              <PlayerAvatar player={you} size="sm" />
-              <span>Open {you.name}’s dossier</span>
-              <ArrowRight size={15} weight="bold" />
-            </Link>
-          )}
-        </div>
-      </section>
+              <ArrowCounterClockwise size={12} weight="bold" />
+              Back to me
+            </button>
 
-      {/* Wrapped Squad Roster Grid (sorted by most unpaid then name, no scroll) */}
-      <section aria-label="Who are you?">
-        <div className="mb-2.5 flex min-h-[28px] flex-wrap items-center justify-between gap-2">
-          <div className="flex flex-wrap items-center gap-2.5">
-            <p className="text-[14px] font-bold text-[var(--rt-muted)]">
-              Who are you? Pick a callsign
-            </p>
-            {me.linkedPlayerId && you && you.id !== me.linkedPlayerId && (
-              <button
-                type="button"
-                onClick={() => setActivePlayerId(me.linkedPlayerId!)}
-                className="rt2-focus cursor-pointer rounded border border-[var(--rt-ui-border)] bg-[var(--rt-surface-alt)] px-2 py-0.5 font-arcade-mono text-[12px] font-bold text-[var(--rt-accent-ink)] hover:border-[var(--rt-accent)]"
-              >
-                Back to me
-              </button>
+            <button
+              type="button"
+              onClick={() => setExpandedRoster((v) => !v)}
+              aria-pressed={expandedRoster}
+              className="rt2-focus inline-flex min-h-[30px] cursor-pointer items-center gap-1.5 rounded border border-transparent px-2 font-arcade-mono text-[12px] font-bold text-[var(--rt-muted)] transition-colors hover:border-[var(--rt-ui-border)] hover:bg-[var(--rt-surface-alt)] hover:text-[var(--rt-accent-ink)]"
+            >
+              <UsersThree size={15} weight="bold" />
+              <span>
+                {expandedRoster
+                  ? "Compact rail"
+                  : `Show all names (${sortedPlayers.length})`}
+              </span>
+            </button>
+
+            {you && (
+              <>
+                <span
+                  aria-hidden="true"
+                  className="hidden h-4 w-px bg-[var(--rt-border-soft)] sm:inline-block"
+                />
+                <Link
+                  to="/players/$playerId"
+                  params={{ playerId: you.id }}
+                  className="rt2-focus inline-flex min-h-[32px] cursor-pointer items-center gap-1.5 text-[14px] font-bold text-[var(--rt-accent-ink)] hover:underline"
+                >
+                  <PlayerAvatar player={you} size="sm" />
+                  <span>{you.name}’s dossier</span>
+                  <ArrowRight size={14} weight="bold" />
+                </Link>
+              </>
             )}
           </div>
-          <span className="tnum font-arcade-mono text-[12px] font-semibold text-[var(--rt-muted)]">
-            {openDebtors.length} open · {sortedPlayers.length - openDebtors.length}{" "}
-            clear
-          </span>
         </div>
 
-        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-          {sortedPlayers.map((p) => {
-            const pOwed = getPlayerUnpaidTotal(p)
-            const active = you !== null && p.id === you.id
-            const isSelf = me.linkedPlayerId === p.id
-            return (
-              <PlayerHoverCard key={p.id} player={p} className="w-full">
-                <button
-                  type="button"
-                  aria-pressed={active}
-                  onClick={() => setActivePlayerId(p.id)}
-                  className={`rt2-focus rt2-roster-chip w-full text-left ${
-                    active
-                      ? "bg-[var(--rt-accent)]"
-                      : pOwed > 0
-                        ? "bg-[var(--rt-ui-border)]"
-                        : "bg-[var(--rt-ui-border)]"
-                  }`}
-                >
-                  <div
-                    className={`rt2-roster-chip-inner flex min-h-[58px] w-full items-center gap-2 px-2.5 py-2 sm:gap-2.5 sm:px-3 ${
+        {/* Animated Avatar Rail */}
+        <div className="px-3.5 py-3 sm:px-4">
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Open debtors: always shown as named pills with amount */}
+            {openDebtors.map((p) => {
+              const owed = getPlayerUnpaidTotal(p)
+              const active = you !== null && p.id === you.id
+              const isSelf = me.linkedPlayerId === p.id
+              return (
+                <PlayerHoverCard key={p.id} player={p}>
+                  <button
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => setActivePlayerId(p.id)}
+                    className={`rt2-focus inline-flex min-h-[40px] cursor-pointer items-center gap-2 rounded-full border-2 py-1 pr-3 pl-1.5 transition-[background-color,border-color,color,transform] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.98] ${
                       active
-                        ? "bg-[var(--rt-accent)] text-[var(--rt-accent-fg)]"
-                        : "bg-[var(--rt-surface-alt)] text-[var(--rt-ink)]"
+                        ? "border-[var(--rt-accent)] bg-[var(--rt-accent)] text-[var(--rt-accent-fg)]"
+                        : "border-[var(--rt-ui-border)] bg-[var(--rt-surface-alt)] text-[var(--rt-ink)] hover:border-[var(--rt-border)]"
                     }`}
                   >
                     <PlayerAvatar player={p} size="sm" />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5 text-[14px] font-bold">
-                        <span className="truncate">
-                          {p.name}
-                          {p.unpaidBills.length > 0
-                            ? ` (${p.unpaidBills.length})`
-                            : ""}
-                        </span>
+                    <span className="text-[13px] font-bold">{p.name}</span>
+                    {isSelf && (
+                      <span
+                        className={`rounded px-1 py-0.5 font-arcade-mono text-[9px] leading-none font-bold uppercase ${
+                          active
+                            ? "border border-current text-current"
+                            : "bg-[var(--rt-accent-soft)] text-[var(--rt-accent-ink)]"
+                        }`}
+                      >
+                        You
+                      </span>
+                    )}
+                    <span
+                      className={`tnum font-arcade-mono text-[12px] font-bold ${
+                        active ? "" : "text-[var(--rt-accent-ink)]"
+                      }`}
+                    >
+                      {formatRupiah(owed)}
+                    </span>
+                    <CurrentMonthBadgeCue
+                      badges={p.currentMonthBadges}
+                      size="xs"
+                      inverted={active}
+                    />
+                  </button>
+                </PlayerHoverCard>
+              )
+            })}
+
+            {/* Clear teammates: smoothly morph between compact avatar dots and named pills */}
+            {clearPlayers.map((p) => {
+              const active = you !== null && p.id === you.id
+              const isSelf = me.linkedPlayerId === p.id
+              const showLabel = expandedRoster || active
+
+              return (
+                <PlayerHoverCard key={p.id} player={p}>
+                  <button
+                    type="button"
+                    aria-pressed={active}
+                    aria-label={`${p.name} - All clear`}
+                    title={showLabel ? undefined : `${p.name} (All clear)`}
+                    onClick={() => setActivePlayerId(p.id)}
+                    className={`rt2-focus relative inline-flex min-h-[36px] cursor-pointer items-center rounded-full border transition-[background-color,border-color,color,padding,transform,box-shadow,opacity] duration-250 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.97] ${
+                      active
+                        ? "border-[var(--rt-accent)] bg-[var(--rt-accent)] py-1 pr-2.5 pl-1 text-[var(--rt-accent-fg)]"
+                        : expandedRoster
+                          ? "border-[var(--rt-ui-border)] bg-[var(--rt-surface-alt)] py-1 pr-2.5 pl-1 text-[var(--rt-ink)] hover:border-[var(--rt-teal)]"
+                          : isSelf
+                            ? "border-[var(--rt-accent)]/75 bg-transparent p-0.5 text-[var(--rt-ink)] hover:scale-105"
+                            : "border-transparent bg-transparent p-0.5 text-[var(--rt-ink)] opacity-85 hover:scale-110 hover:opacity-100"
+                    }`}
+                  >
+                    <span className="relative shrink-0">
+                      <PlayerAvatar player={p} size="sm" />
+                      <span
+                        aria-hidden="true"
+                        className={`absolute -right-0.5 -bottom-0.5 h-2.5 w-2.5 rounded-full border-2 border-[var(--rt-surface)] bg-[var(--rt-teal)] transition-[opacity,transform] duration-200 ${
+                          showLabel
+                            ? "scale-0 opacity-0"
+                            : "scale-100 opacity-100"
+                        }`}
+                      />
+                    </span>
+
+                    <span
+                      className="grid transition-[grid-template-columns,opacity,margin] duration-250 ease-[cubic-bezier(0.22,1,0.36,1)]"
+                      style={{
+                        gridTemplateColumns: showLabel ? "1fr" : "0fr",
+                        opacity: showLabel ? 1 : 0,
+                        marginLeft: showLabel ? "0.375rem" : "0px",
+                      }}
+                    >
+                      <span className="flex items-center gap-1.5 overflow-hidden text-[13px] font-bold whitespace-nowrap">
+                        <span>{p.name}</span>
                         {isSelf && (
                           <span
-                            className={`shrink-0 rounded px-1 py-0.5 font-arcade-mono text-[9px] leading-none font-bold uppercase ${
+                            className={`rounded px-1 py-0.5 font-arcade-mono text-[9px] leading-none font-bold uppercase ${
                               active
                                 ? "border border-current text-current"
                                 : "bg-[var(--rt-accent-soft)] text-[var(--rt-accent-ink)]"
@@ -187,38 +265,25 @@ function HomePage() {
                             You
                           </span>
                         )}
-                      </div>
-                      <p
-                        className={`tnum truncate font-arcade-mono text-[13px] font-semibold whitespace-nowrap ${
-                          active
-                            ? ""
-                            : pOwed > 0
-                              ? "text-[var(--rt-accent-ink)]"
-                              : "text-[var(--rt-teal-ink)]"
-                        }`}
-                      >
-                        {pOwed > 0 ? formatRupiah(pOwed) : "All clear"}
-                      </p>
-                    </div>
-                    <CurrentMonthBadgeCue
-                      badges={p.currentMonthBadges}
-                      size="sm"
-                      inverted={active}
-                    />
-                    {pOwed === 0 && (
-                      <Check
-                        size={14}
-                        weight="bold"
-                        className={`shrink-0 ${
-                          active ? "" : "text-[var(--rt-teal-ink)]"
-                        }`}
-                      />
-                    )}
-                  </div>
-                </button>
-              </PlayerHoverCard>
-            )
-          })}
+                        <CurrentMonthBadgeCue
+                          badges={p.currentMonthBadges}
+                          size="xs"
+                          inverted={active}
+                        />
+                        {expandedRoster && (
+                          <Check
+                            size={12}
+                            weight="bold"
+                            className={active ? "" : "text-[var(--rt-teal-ink)]"}
+                          />
+                        )}
+                      </span>
+                    </span>
+                  </button>
+                </PlayerHoverCard>
+              )
+            })}
+          </div>
         </div>
       </section>
 
@@ -227,18 +292,10 @@ function HomePage() {
          ============================================================ */}
       <section id="bills" className="grid gap-6 lg:grid-cols-12">
         <div className="lg:col-span-12">
-          <div className="flex flex-wrap items-baseline justify-between gap-3 border-b-2 border-[var(--rt-border)] pb-2">
+          <div className="border-b-2 border-[var(--rt-border)] pb-2">
             <h1 className="rt2-display text-3xl font-extrabold">
-              Bills to pay ({unpaidBills.length} open)
+              Bills to pay
             </h1>
-            {unpaidBills.length > 0 && (
-              <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5">
-                <HpBarLegend />
-                <span className="text-[14px] text-[var(--rt-muted)]">
-                  Hover any bar chunk for details
-                </span>
-              </div>
-            )}
           </div>
         </div>
 
@@ -317,9 +374,6 @@ function HomePage() {
                           </span>
                           <span className="font-arcade-mono text-[14px] text-[var(--rt-muted)]">
                             {fmtDate(bill.orderDate)}
-                          </span>
-                          <span className="tnum font-arcade-mono text-[14px] font-bold text-[var(--rt-teal-ink)]">
-                            {bill.paidCount} of {bill.totalPlayers} paid
                           </span>
                         </div>
                         <span className="rt2-bill-action inline-flex items-center gap-1 text-[14px] font-bold text-[var(--rt-accent-ink)]">
@@ -418,6 +472,8 @@ function HomePage() {
           />
         </Link>
       </section>
+
+      <StandingShiftButton className="!fixed right-4 bottom-4 z-40 shadow-[0_8px_24px_rgba(0,0,0,0.35)] sm:right-6 sm:bottom-6" />
     </>
   )
 }
