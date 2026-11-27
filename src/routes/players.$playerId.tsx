@@ -21,7 +21,10 @@ import { Link, createFileRoute } from "@tanstack/react-router"
 import { useEffect, useMemo, useState } from "react"
 
 import { AvatarUploadDialog } from "@/components/telemetry/AvatarUploadDialog"
-import { PlayerHoverCard } from "@/components/telemetry/PlayerHoverCard"
+import {
+  CurrentMonthBadgeCue,
+  PlayerHoverCard,
+} from "@/components/telemetry/PlayerHoverCard"
 import {
   Popover,
   PopoverContent,
@@ -274,6 +277,14 @@ function PlayerDetailRoute() {
     target?.scrollIntoView({ behavior: "smooth", block: "center" })
   }
 
+  const scrollToMonthlyBadges = () => {
+    document
+      .getElementById("monthly-badges")
+      ?.scrollIntoView({ behavior: "smooth", block: "center" })
+  }
+
+  const latestMonthlyBadge = monthlyBadges[0] ?? null
+
   return (
     <div className="space-y-6">
       <div>
@@ -474,6 +485,41 @@ function PlayerDetailRoute() {
             <div className="flex flex-wrap items-center gap-2">
               <TierPill tier={tier} />
               {player.badge && <EarnedBadgePill badge={player.badge} />}
+              {latestMonthlyBadge && (
+                <button
+                  type="button"
+                  onClick={scrollToMonthlyBadges}
+                  aria-label="Jump to monthly badges history"
+                  className="rt2-focus rt2-btn-secondary inline-flex min-h-[34px] cursor-pointer items-center gap-1.5 rounded px-2.5 py-1 font-arcade-mono text-[12px] font-bold"
+                >
+                  {latestMonthlyBadge.stickerSrc ? (
+                    <img
+                      src={latestMonthlyBadge.stickerSrc}
+                      alt=""
+                      width={22}
+                      height={22}
+                      className="h-5.5 w-5.5 shrink-0 object-contain"
+                    />
+                  ) : latestMonthlyBadge.kind === "spending" ? (
+                    <Crown
+                      size={14}
+                      weight="fill"
+                      className="shrink-0 text-[var(--rt-amber-ink)]"
+                    />
+                  ) : (
+                    <Heart
+                      size={14}
+                      weight="fill"
+                      className="shrink-0 text-[var(--rt-teal-ink)]"
+                    />
+                  )}
+                  <span className="tnum">
+                    {monthlyBadges.length}{" "}
+                    {monthlyBadges.length === 1 ? "badge" : "badges"}
+                  </span>
+                  <ArrowDown size={12} weight="bold" className="shrink-0" />
+                </button>
+              )}
               <span className="rounded border border-[var(--rt-ui-border)] bg-[var(--rt-bg)] px-2.5 py-1 font-arcade-mono text-[13px] font-bold">
                 Spender #{spendRank} | Tipper #{tipRank}
               </span>
@@ -592,7 +638,10 @@ function PlayerDetailRoute() {
       <section className="grid gap-6 lg:grid-cols-12">
         <div className="min-w-0 space-y-6 lg:col-span-8">
           {/* Monthly Badges (v1 sticker badges + trophy cards) */}
-          <div className="rounded border-2 border-[var(--rt-border)] bg-[var(--rt-surface)] p-5">
+          <div
+            id="monthly-badges"
+            className="scroll-mt-24 rounded border-2 border-[var(--rt-border)] bg-[var(--rt-surface)] p-5"
+          >
             <div className="flex items-baseline justify-between border-b border-[var(--rt-border-soft)] pb-2.5">
               <h2 className="rt2-display text-2xl font-extrabold">
                 Monthly badges
@@ -1310,6 +1359,10 @@ function PlayerDetailRoute() {
                     >
                       <PlayerAvatar player={mate} size="sm" heroAttr />
                       <span data-hero-name="">{mate.name}</span>
+                      <CurrentMonthBadgeCue
+                        badges={mate.currentMonthBadges}
+                        size="xs"
+                      />
                       <span className="tnum text-[var(--rt-muted)]">
                         {billCount}x
                       </span>

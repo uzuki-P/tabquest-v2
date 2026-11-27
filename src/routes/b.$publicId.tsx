@@ -12,6 +12,10 @@ import { Link, createFileRoute } from "@tanstack/react-router"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import {
+  CurrentMonthBadgeCue,
+  PlayerHoverCard,
+} from "@/components/telemetry/PlayerHoverCard"
+import {
   BillBossAvatar,
   CurrencyInput,
   HpBar,
@@ -348,12 +352,26 @@ function BillDetailRoute() {
                       }
                       size="md"
                     />
-                    <div>
-                      <span className="rt2-row-title text-[17px] font-bold">
-                        {s.name}
-                      </span>
+                    <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                      {player ? (
+                        <PlayerHoverCard player={player}>
+                          <span className="rt2-row-title truncate text-[17px] font-bold">
+                            {s.name}
+                          </span>
+                        </PlayerHoverCard>
+                      ) : (
+                        <span className="rt2-row-title truncate text-[17px] font-bold">
+                          {s.name}
+                        </span>
+                      )}
+                      {player && (
+                        <CurrentMonthBadgeCue
+                          badges={player.currentMonthBadges}
+                          size="sm"
+                        />
+                      )}
                       {showYouBadge && (
-                        <span className="ml-2 rounded bg-[var(--rt-accent-soft)] px-1.5 py-0.5 font-arcade-mono text-[13px] font-bold text-[var(--rt-accent-ink)]">
+                        <span className="rounded bg-[var(--rt-accent-soft)] px-1.5 py-0.5 font-arcade-mono text-[13px] font-bold text-[var(--rt-accent-ink)]">
                           You
                         </span>
                       )}

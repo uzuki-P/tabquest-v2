@@ -6,7 +6,11 @@ import {
 import { Link, createFileRoute } from "@tanstack/react-router"
 import { useEffect, useState } from "react"
 
-import { PlayerHoverCard } from "@/components/telemetry/PlayerHoverCard"
+import {
+  CurrentMonthBadgeCue,
+  PlayerHoverCard,
+} from "@/components/telemetry/PlayerHoverCard"
+import { StandingShiftButton } from "@/components/telemetry/StandingCelebration"
 import {
   EarnedBadgePill,
   MonthStepper,
@@ -136,6 +140,8 @@ function AllRanksRoute() {
               onChange={setSelectedMonth}
             />
           )}
+
+          <StandingShiftButton />
         </div>
 
         <div className="rt2-search-box relative flex h-11 w-full max-w-xs items-center rounded border-2 border-[var(--rt-ui-border)] bg-[var(--rt-surface-alt)]">
@@ -302,6 +308,10 @@ function AllRanksRoute() {
                                   {p.name}
                                 </span>
                               </PlayerHoverCard>
+                              <CurrentMonthBadgeCue
+                                badges={p.currentMonthBadges}
+                                size="sm"
+                              />
                               {showYouBadge && (
                                 <span className="rounded bg-[var(--rt-accent)] px-1.5 py-0.5 font-arcade-mono text-[11px] font-bold text-[var(--rt-accent-fg)] sm:text-[12px]">
                                   You
@@ -401,6 +411,10 @@ function AllRanksRoute() {
                                   {p.name}
                                 </span>
                               </PlayerHoverCard>
+                              <CurrentMonthBadgeCue
+                                badges={p.currentMonthBadges}
+                                size="sm"
+                              />
                               {showYouBadge && (
                                 <span className="rounded bg-[var(--rt-accent)] px-1.5 py-0.5 font-arcade-mono text-[11px] font-bold text-[var(--rt-accent-fg)] sm:text-[12px]">
                                   You

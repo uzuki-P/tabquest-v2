@@ -55,6 +55,7 @@ export interface PlayerSummary {
   savedDiscount: number
   savedPct: number
   badge: EarnedBadge | null
+  currentMonthBadges?: PlayerMonthlyBadge[]
   bestTipNote: string
   linkedEmail: string | null
   userId: string | null
@@ -124,6 +125,39 @@ export interface MeResponse {
   paymentMethods: PaymentMethod[]
 }
 
+export type StandingBoard = "spending" | "tips"
+
+export type StandingChangeKind = "crown" | "overtake" | "close-chase"
+
+export interface StandingMove {
+  playerId: string
+  name: string
+  prevRank: number | null
+  newRank: number
+  prevAmount: number
+  newAmount: number
+}
+
+export interface StandingChangeSummary {
+  id: string
+  monthKey: string
+  monthLabel: string
+  board: StandingBoard
+  kind: StandingChangeKind
+  actorId: string
+  actorName: string
+  targetId: string | null
+  targetName: string | null
+  prevRank: number | null
+  newRank: number
+  amount: number
+  gapAmount: number
+  triggerLabel: string
+  occurredAt: string
+  stickerSrc: string | null
+  moves: StandingMove[]
+}
+
 export interface HomeFeedResponse {
   month: string
   availableMonths: string[]
@@ -137,6 +171,7 @@ export interface HomeFeedResponse {
     totalOutstanding: number
     openDebtorsCount: number
   }
+  latestStandingChange?: StandingChangeSummary | null
 }
 
 export interface RanksResponse {

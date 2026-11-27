@@ -11,6 +11,7 @@ import type { ReactNode } from "react"
 
 import { DevBadge } from "@/components/DevBadge"
 import { IdentifyPlayerDialog } from "@/components/telemetry/IdentifyPlayerDialog"
+import { StandingCelebration } from "@/components/telemetry/StandingCelebration"
 import {
   AdminCollectDrawer,
   AppHeader,
@@ -220,6 +221,7 @@ function AppShell() {
       )}
 
       <IdentifyPlayerDialog />
+      <StandingCelebration />
 
       {role === "admin" && (
         <AdminCollectDrawer

@@ -31,6 +31,10 @@ test:
 e2e *args:
     bunx playwright test {{args}}
 
+# Run only critical-flow Playwright E2E tests (auth/linking, bill create/edit/publish, transfer claims, Collect All, primary nav).
+e2e-critical *args:
+    bunx playwright test --grep @critical {{args}}
+
 # Install the Chromium build Playwright needs (run once per Playwright upgrade).
 e2e-install:
     bunx playwright install chromium-headless-shell

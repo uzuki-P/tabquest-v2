@@ -19,7 +19,7 @@ const monthTitle = (key: string) => {
 }
 const rupiah = (n: number) => `Rp${n.toLocaleString("id-ID")}`
 
-test("primary navigation reaches every public section and back", async ({ page }) => {
+test("primary navigation reaches every public section and back", { tag: "@critical" }, async ({ page }) => {
   await page.goto("/")
   await waitForLoaded(page)
   const nav = page.getByRole("navigation", { name: "Primary" })
@@ -71,7 +71,7 @@ test.describe("home", () => {
     await expect(page.getByText(`Pay all (${DOSSIER_PLAYER.name})`)).toBeVisible()
   })
 
-  test("copy amount gives feedback and pay & report asks guests to sign in", async ({ page, context }) => {
+  test("copy amount gives feedback and pay & report asks guests to sign in", { tag: "@critical" }, async ({ page, context }) => {
     await context.grantPermissions(["clipboard-read", "clipboard-write"])
     await page.addInitScript((id) => localStorage.setItem("tq-selected-player", id), DOSSIER_PLAYER.id)
     await page.goto("/")
@@ -151,7 +151,7 @@ test.describe("ranks", () => {
 })
 
 test.describe("bill detail", () => {
-  test("lists every split and opens/closes the receipt preview", async ({ page }) => {
+  test("lists every split and opens/closes the receipt preview", { tag: "@critical" }, async ({ page }) => {
     await page.goto(`/b/${DETAIL_BILL.publicId}`)
     await waitForLoaded(page)
     await expect(page.getByRole("heading", { level: 1, name: DETAIL_BILL.merchant })).toBeVisible()
@@ -197,7 +197,7 @@ test.describe("player dossier", () => {
 })
 
 test.describe("first-login self-identification", () => {
-  test("prompts an unlinked signed-in user to identify themselves and links their chosen player", async ({ page }) => {
+  test("prompts an unlinked signed-in user to identify themselves and links their chosen player", { tag: "@critical" }, async ({ page }) => {
     const api = await mockApi(page, { as: "unlinked" })
     const unlinkedPlayer = latestHome.players.find(
       (p) => p.archivedAt === null && p.userId === null

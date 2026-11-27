@@ -22,7 +22,7 @@ html[data-theme="dark"] .rt2-root {
 .rt2-btn-primary {
   background-color: var(--rt-accent);
   color: var(--rt-accent-fg);
-  border: 2px solid var(--rt-border);
+  border: 2px solid var(--rt-accent-hover);
   cursor: pointer;
   transition: background-color 120ms ease, transform 120ms ease, box-shadow 120ms ease;
 }
@@ -43,7 +43,7 @@ html[data-theme="dark"] .rt2-root {
   transition: background-color 120ms ease, border-color 120ms ease, transform 120ms ease;
 }
 .rt2-btn-secondary:hover:not(:disabled) {
-  border-color: var(--rt-ink);
+  border-color: var(--rt-border);
   background-color: var(--rt-bg);
 }
 .rt2-btn-secondary:disabled {
@@ -338,6 +338,54 @@ html[data-theme="dark"] .rt2-root {
   80% { transform: translate(-50%, -10px) scale(1); opacity: 1; }
   100% { transform: translate(-50%, -16px) scale(0.95); opacity: 0; }
 }
+@keyframes rt2-celebrate-in {
+  0% { transform: translateY(14px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+@keyframes rt2-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes rt2-vibrate {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  12% { transform: translate3d(-4px, 0, 0); }
+  25% { transform: translate3d(4px, 0, 0); }
+  37% { transform: translate3d(-4px, 0, 0); }
+  50% { transform: translate3d(4px, 0, 0); }
+  62% { transform: translate3d(-3px, 0, 0); }
+  75% { transform: translate3d(3px, 0, 0); }
+  88% { transform: translate3d(-2px, 0, 0); }
+}
+@keyframes rt2-delta-rise {
+  0% { transform: translateY(6px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+@keyframes rt2-confetti-pop {
+  0% {
+    transform: translate3d(0, 0, 0) scale(0.4) rotate(0deg);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(var(--cx, 0px), var(--cy, -60px), 0) scale(1) rotate(var(--cr, 180deg));
+    opacity: 0;
+  }
+}
+@keyframes rt2-winner-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(34, 195, 184, 0.55); }
+  70% { box-shadow: 0 0 0 12px rgba(34, 195, 184, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(34, 195, 184, 0); }
+}
+@keyframes rt2-drain-bar {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
+}
+@keyframes rt2-rank-flip {
+  0% { transform: translateY(40%); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
 .rt2-flicker-wrap { animation: rt2-flicker 900ms linear infinite; }
 .rt2-reticle { animation: rt2-reticle-in 140ms steps(3, end) forwards; }
 .rt2-crack-path { stroke-dasharray: 60; animation: rt2-crack-draw 360ms ease-out forwards; }
@@ -351,6 +399,21 @@ html[data-theme="dark"] .rt2-root {
 .rt2-page-enter { animation: rt2-page-enter 160ms ease-out; }
 .rt2-toast-in { animation: rt2-toast-in 180ms ease-out; }
 .rt2-copied-pop { animation: rt2-copied-pop 1200ms ease-out forwards; }
+.rt2-celebrate-in { animation: rt2-celebrate-in 240ms cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+.rt2-overlay-in { animation: rt2-overlay-in 180ms ease-out forwards; }
+.rt2-vibrate { animation: rt2-vibrate 480ms ease-in-out both; }
+.rt2-delta-rise { animation: rt2-delta-rise 280ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.rt2-confetti-piece { animation: rt2-confetti-pop 1100ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+.rt2-winner-pulse { animation: rt2-winner-pulse 900ms ease-out both; }
+.rt2-rank-flip { animation: rt2-rank-flip 300ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.rt2-drain-bar { transform-origin: left center; animation: rt2-drain-bar 10s linear forwards; }
+.rt2-swap-row {
+  transition:
+    transform 720ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 300ms ease,
+    background-color 300ms ease,
+    opacity 300ms ease;
+}
 .rt2-btn-primary:active:not(:disabled),
 .rt2-btn-secondary:active:not(:disabled),
 .rt2-btn-danger:active:not(:disabled) {
@@ -359,8 +422,12 @@ html[data-theme="dark"] .rt2-root {
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .rt2-caution, .rt2-flicker-wrap, .rt2-reticle, .rt2-crack-path, .rt2-shard-1, .rt2-shard-2, .rt2-shard-3,
-  .rt2-pop, .rt2-rank-jump, .rt2-tooltip-in, .rt2-page-enter, .rt2-toast-in, .rt2-copied-pop {
+  .rt2-pop, .rt2-rank-jump, .rt2-tooltip-in, .rt2-page-enter, .rt2-toast-in, .rt2-copied-pop,
+  .rt2-celebrate-in, .rt2-overlay-in, .rt2-vibrate, .rt2-delta-rise, .rt2-confetti-piece, .rt2-winner-pulse, .rt2-rank-flip, .rt2-drain-bar {
     animation: none !important;
+  }
+  .rt2-swap-row {
+    transition: none !important;
   }
   ::view-transition-old(*), ::view-transition-new(*) {
     animation: none !important;

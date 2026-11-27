@@ -47,7 +47,7 @@ test.describe("admin bills list", () => {
     expect(restore.body).toEqual({ action: "unarchive" })
   })
 
-  test("publishing a draft sends a publish action", async ({ page, mock }) => {
+  test("publishing a draft sends a publish action", { tag: "@critical" }, async ({ page, mock }) => {
     await page.goto("/admin")
     await waitForLoaded(page)
     await page.getByRole("tab", { name: "Drafts (1)" }).click()
@@ -74,7 +74,7 @@ test.describe("admin bills list", () => {
     await expect(dialog).toBeHidden()
   })
 
-  test("collect all drawer opens and closes", async ({ page }) => {
+  test("collect all drawer opens and closes", { tag: "@critical" }, async ({ page }) => {
     await page.goto("/admin")
     await waitForLoaded(page)
     await page.getByRole("button", { name: /Collect all/ }).click()
@@ -110,7 +110,7 @@ test.describe("edit bill", () => {
     await expect(page.getByPlaceholder("e.g. Kopi Tuku Kemang")).toHaveValue(detail.bill.merchant)
   })
 
-  test("saving changes sends the full edited bill and returns to the bill page", async ({ page, mock }) => {
+  test("saving changes sends the full edited bill and returns to the bill page", { tag: "@critical" }, async ({ page, mock }) => {
     await page.goto(`/admin/bills/${detail.bill.id}/edit`)
     await waitForLoaded(page)
     await page.getByPlaceholder("e.g. Kopi Tuku Kemang").fill("Renamed Merchant")
@@ -196,7 +196,7 @@ test.describe("edit bill", () => {
 })
 
 test.describe("new bill", () => {
-  test("saving an incomplete draft posts it unpublished and returns to admin", async ({ page, mock }) => {
+  test("saving an incomplete draft posts it unpublished and returns to admin", { tag: "@critical" }, async ({ page, mock }) => {
     await page.goto("/admin/bills/new")
     await waitForLoaded(page)
     await page.getByPlaceholder("e.g. Kopi Tuku Kemang").fill("E2E Noodle Bar")
@@ -241,7 +241,7 @@ test.describe("players", () => {
 })
 
 test.describe("linked player", () => {
-  test("the admin's linked player can report a transfer", async ({ page, mock }) => {
+  test("the admin's linked player can report a transfer", { tag: "@critical" }, async ({ page, mock }) => {
     const linked = latestLinkedPlayer()
     test.skip(!linked, "fixture admin is not linked to a player with unpaid bills")
     await page.goto("/")

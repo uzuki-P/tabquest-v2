@@ -18,6 +18,7 @@ import type {
   PaymentMethod,
   PaymentMethodType,
   PlayerSummary,
+  StandingChangeSummary,
 } from "@/domain/types"
 import { getPlayerUnpaidTotal } from "@/domain/types"
 import { signInWithShoo, signOut, useSession } from "@/lib/auth-client"
@@ -42,6 +43,23 @@ export type HitEvent = {
 const THEME_STORAGE_KEY = "tq-theme-pref"
 const CALLSIGN_STORAGE_KEY = "tq-selected-player"
 const IDENTIFY_DISMISSED_PREFIX = "tq-identify-dismissed:"
+const STANDING_SEEN_STORAGE_KEY = "tq-seen-standing-change"
+
+function readSeenStandingChangeId(): string | null {
+  try {
+    return window.localStorage.getItem(STANDING_SEEN_STORAGE_KEY)
+  } catch {
+    return null
+  }
+}
+
+function writeSeenStandingChangeId(id: string): void {
+  try {
+    window.localStorage.setItem(STANDING_SEEN_STORAGE_KEY, id)
+  } catch {
+    // ignore storage errors
+  }
+}
 
 function isIdentifyDismissed(userId: string): boolean {
   try {
@@ -140,6 +158,13 @@ interface AppStoreValue {
   identifyModalOpen: boolean
   openIdentifyModal: () => void
   dismissIdentifyModal: () => void
+  latestStandingChange: StandingChangeSummary | null
+  standingBannerOpen: boolean
+  standingModalOpen: boolean
+  hasUnseenStandingChange: boolean
+  dismissStandingBanner: () => void
+  openStandingModal: () => void
+  closeStandingModal: () => void
   preview: boolean
   setPreview: (active: boolean) => void
   hit: HitEvent | null
@@ -273,6 +298,13 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   const [systemDark, setSystemDark] = useState<boolean>(false)
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false)
   const [identifyModalOpen, setIdentifyModalOpen] = useState<boolean>(false)
+  const [latestStandingChange, setLatestStandingChange] =
+    useState<StandingChangeSummary | null>(null)
+  const [seenStandingChangeId, setSeenStandingChangeId] = useState<
+    string | null
+  >(null)
+  const [standingBannerOpen, setStandingBannerOpen] = useState<boolean>(false)
+  const [standingModalOpen, setStandingModalOpen] = useState<boolean>(false)
   const [preview, setPreview] = useState<boolean>(false)
   const [hit, setHit] = useState<HitEvent | null>(null)
   const [queuedCollectHit, setQueuedCollectHit] = useState<HitEvent | null>(
@@ -379,6 +411,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         setBills(homeData.bills)
         setUnpaidBills(homeData.unpaidBills)
         setAvailableMonths(homeData.availableMonths)
+        setLatestStandingChange(homeData.latestStandingChange ?? null)
         if (!target || target !== homeData.month) {
           setSelectedMonthState(homeData.month)
         }
@@ -476,6 +509,69 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     me.authenticated,
     me.user?.id,
     me.linkedPlayerId,
+  ])
+
+  // Hydrate last seen standing change ID from localStorage once on mount
+  useEffect(() => {
+    setSeenStandingChangeId(readSeenStandingChangeId())
+  }, [])
+
+  const markStandingChangeSeen = useCallback((id: string) => {
+    writeSeenStandingChangeId(id)
+    setSeenStandingChangeId(id)
+  }, [])
+
+  const dismissStandingBanner = useCallback(() => {
+    setStandingBannerOpen(false)
+    if (latestStandingChange) {
+      markStandingChangeSeen(latestStandingChange.id)
+    }
+  }, [latestStandingChange, markStandingChangeSeen])
+
+  const openStandingModal = useCallback(() => {
+    setStandingBannerOpen(false)
+    setStandingModalOpen(true)
+    if (latestStandingChange) {
+      markStandingChangeSeen(latestStandingChange.id)
+    }
+  }, [latestStandingChange, markStandingChangeSeen])
+
+  const closeStandingModal = useCallback(() => {
+    setStandingModalOpen(false)
+  }, [])
+
+  const hasUnseenStandingChange =
+    latestStandingChange !== null &&
+    seenStandingChangeId !== latestStandingChange.id
+
+  // Show the celebratory banner once per unseen notable standing change
+  useEffect(() => {
+    if (loading || !latestStandingChange || identifyModalOpen) return
+    const storedSeen = readSeenStandingChangeId()
+    if (storedSeen === latestStandingChange.id) return
+
+    const currentPlayerId =
+      (me.authenticated ? me.linkedPlayerId : null) || activePlayerId || null
+    const involvesMe =
+      currentPlayerId !== null &&
+      latestStandingChange.moves.some((m) => m.playerId === currentPlayerId)
+    const shouldCelebrate =
+      latestStandingChange.kind === "crown" ||
+      latestStandingChange.kind === "close-chase" ||
+      involvesMe
+
+    if (!shouldCelebrate) return
+
+    markStandingChangeSeen(latestStandingChange.id)
+    setStandingBannerOpen(true)
+  }, [
+    loading,
+    latestStandingChange,
+    identifyModalOpen,
+    me.authenticated,
+    me.linkedPlayerId,
+    activePlayerId,
+    markStandingChangeSeen,
   ])
 
   const openIdentifyModal = useCallback(() => {
@@ -1196,6 +1292,13 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         identifyModalOpen,
         openIdentifyModal,
         dismissIdentifyModal,
+        latestStandingChange,
+        standingBannerOpen,
+        standingModalOpen,
+        hasUnseenStandingChange,
+        dismissStandingBanner,
+        openStandingModal,
+        closeStandingModal,
         preview,
         setPreview,
         hit,

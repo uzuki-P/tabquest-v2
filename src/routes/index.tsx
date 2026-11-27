@@ -8,6 +8,11 @@ import {
 import { Link, createFileRoute } from "@tanstack/react-router"
 
 import {
+  CurrentMonthBadgeCue,
+  PlayerHoverCard,
+} from "@/components/telemetry/PlayerHoverCard"
+import { StandingShiftButton } from "@/components/telemetry/StandingCelebration"
+import {
   BillBossAvatar,
   HpBar,
   HpBarLegend,
@@ -97,17 +102,20 @@ function HomePage() {
           )}
         </div>
 
-        {you && (
-          <Link
-            to="/players/$playerId"
-            params={{ playerId: you.id }}
-            className="rt2-focus inline-flex min-h-[40px] cursor-pointer items-center gap-2 text-[15px] font-bold text-[var(--rt-accent-ink)] hover:underline"
-          >
-            <PlayerAvatar player={you} size="sm" />
-            <span>Open {you.name}’s dossier</span>
-            <ArrowRight size={15} weight="bold" />
-          </Link>
-        )}
+        <div className="flex flex-wrap items-center gap-3">
+          <StandingShiftButton />
+          {you && (
+            <Link
+              to="/players/$playerId"
+              params={{ playerId: you.id }}
+              className="rt2-focus inline-flex min-h-[40px] cursor-pointer items-center gap-2 text-[15px] font-bold text-[var(--rt-accent-ink)] hover:underline"
+            >
+              <PlayerAvatar player={you} size="sm" />
+              <span>Open {you.name}’s dossier</span>
+              <ArrowRight size={15} weight="bold" />
+            </Link>
+          )}
+        </div>
       </section>
 
       {/* Wrapped Squad Roster Grid (sorted by most unpaid then name, no scroll) */}
@@ -139,70 +147,76 @@ function HomePage() {
             const active = you !== null && p.id === you.id
             const isSelf = me.linkedPlayerId === p.id
             return (
-              <button
-                key={p.id}
-                type="button"
-                aria-pressed={active}
-                onClick={() => setActivePlayerId(p.id)}
-                className={`rt2-focus rt2-roster-chip w-full text-left ${
-                  active
-                    ? "bg-[var(--rt-accent)]"
-                    : pOwed > 0
-                      ? "bg-[var(--rt-ui-border)]"
-                      : "bg-[var(--rt-ui-border)]"
-                }`}
-              >
-                <div
-                  className={`rt2-roster-chip-inner flex min-h-[58px] w-full items-center gap-2 px-2.5 py-2 sm:gap-2.5 sm:px-3 ${
+              <PlayerHoverCard key={p.id} player={p} className="w-full">
+                <button
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => setActivePlayerId(p.id)}
+                  className={`rt2-focus rt2-roster-chip w-full text-left ${
                     active
-                      ? "bg-[var(--rt-accent)] text-[var(--rt-accent-fg)]"
-                      : "bg-[var(--rt-surface-alt)] text-[var(--rt-ink)]"
+                      ? "bg-[var(--rt-accent)]"
+                      : pOwed > 0
+                        ? "bg-[var(--rt-ui-border)]"
+                        : "bg-[var(--rt-ui-border)]"
                   }`}
                 >
-                  <PlayerAvatar player={p} size="sm" />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5 text-[14px] font-bold">
-                      <span className="truncate">
-                        {p.name}
-                        {p.unpaidBills.length > 0
-                          ? ` (${p.unpaidBills.length})`
-                          : ""}
-                      </span>
-                      {isSelf && (
-                        <span
-                          className={`shrink-0 rounded px-1 py-0.5 font-arcade-mono text-[9px] leading-none font-bold uppercase ${
-                            active
-                              ? "border border-current text-current"
-                              : "bg-[var(--rt-accent-soft)] text-[var(--rt-accent-ink)]"
-                          }`}
-                        >
-                          You
+                  <div
+                    className={`rt2-roster-chip-inner flex min-h-[58px] w-full items-center gap-2 px-2.5 py-2 sm:gap-2.5 sm:px-3 ${
+                      active
+                        ? "bg-[var(--rt-accent)] text-[var(--rt-accent-fg)]"
+                        : "bg-[var(--rt-surface-alt)] text-[var(--rt-ink)]"
+                    }`}
+                  >
+                    <PlayerAvatar player={p} size="sm" />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 text-[14px] font-bold">
+                        <span className="truncate">
+                          {p.name}
+                          {p.unpaidBills.length > 0
+                            ? ` (${p.unpaidBills.length})`
+                            : ""}
                         </span>
-                      )}
+                        {isSelf && (
+                          <span
+                            className={`shrink-0 rounded px-1 py-0.5 font-arcade-mono text-[9px] leading-none font-bold uppercase ${
+                              active
+                                ? "border border-current text-current"
+                                : "bg-[var(--rt-accent-soft)] text-[var(--rt-accent-ink)]"
+                            }`}
+                          >
+                            You
+                          </span>
+                        )}
+                      </div>
+                      <p
+                        className={`tnum truncate font-arcade-mono text-[13px] font-semibold whitespace-nowrap ${
+                          active
+                            ? ""
+                            : pOwed > 0
+                              ? "text-[var(--rt-accent-ink)]"
+                              : "text-[var(--rt-teal-ink)]"
+                        }`}
+                      >
+                        {pOwed > 0 ? formatRupiah(pOwed) : "All clear"}
+                      </p>
                     </div>
-                    <p
-                      className={`tnum truncate font-arcade-mono text-[13px] font-semibold whitespace-nowrap ${
-                        active
-                          ? ""
-                          : pOwed > 0
-                            ? "text-[var(--rt-accent-ink)]"
-                            : "text-[var(--rt-teal-ink)]"
-                      }`}
-                    >
-                      {pOwed > 0 ? formatRupiah(pOwed) : "All clear"}
-                    </p>
-                  </div>
-                  {pOwed === 0 && (
-                    <Check
-                      size={14}
-                      weight="bold"
-                      className={`shrink-0 ${
-                        active ? "" : "text-[var(--rt-teal-ink)]"
-                      }`}
+                    <CurrentMonthBadgeCue
+                      badges={p.currentMonthBadges}
+                      size="sm"
+                      inverted={active}
                     />
-                  )}
-                </div>
-              </button>
+                    {pOwed === 0 && (
+                      <Check
+                        size={14}
+                        weight="bold"
+                        className={`shrink-0 ${
+                          active ? "" : "text-[var(--rt-teal-ink)]"
+                        }`}
+                      />
+                    )}
+                  </div>
+                </button>
+              </PlayerHoverCard>
             )
           })}
         </div>

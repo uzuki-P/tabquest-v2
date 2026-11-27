@@ -32,6 +32,8 @@ import {
   updatePlayer,
 } from "@/server/services/players"
 import {
+  computeLatestStandingChange,
+  computeMonthlyBadgesByPlayer,
   getHomeFeed,
   getPlayerDetail,
   getRanksFeed,
@@ -612,5 +614,400 @@ describe("Phase 4 D1 services", () => {
         playerId: alicePlayer.id,
       })
     ).rejects.toMatchObject({ status: 409, code: "PLAYER_ALREADY_LINKED" })
+  })
+
+  it("computes monthly #1 spending and tipping badges in a single pass with alphabetical tie-breaks", () => {
+    const players = [
+      { id: "p-zoe", name: "Zoe" },
+      { id: "p-amy", name: "Amy" },
+      { id: "p-ben", name: "Ben" },
+    ]
+    const bills = [
+      // Month with a 2-way tie on spend (Zoe vs Amy -> Amy wins alphabetically) and clear tip winner (Ben)
+      { id: "b-nov-1", orderDate: "2026-11-10" },
+      // Month where Zoe wins both spend and tips (outside sticker window -> stickerSrc null)
+      { id: "b-jul-1", orderDate: "2026-07-15" },
+      // Month with zero spend and zero tips -> no badges awarded
+      { id: "b-oct-1", orderDate: "2026-10-05" },
+    ]
+    const splits = [
+      // Nov 2026: Zoe and Amy tie at 50_000 spend; Ben tips 5_000; Zoe unpaid so paidAmount ignored
+      {
+        billId: "b-nov-1",
+        playerId: "p-zoe",
+        shareAmount: 50000,
+        paymentStatus: "unpaid",
+        paidAmount: 99000,
+      },
+      {
+        billId: "b-nov-1",
+        playerId: "p-amy",
+        shareAmount: 50000,
+        paymentStatus: "paid",
+        paidAmount: 50000,
+      },
+      {
+        billId: "b-nov-1",
+        playerId: "p-ben",
+        shareAmount: 20000,
+        paymentStatus: "paid",
+        paidAmount: 25000,
+      },
+      // Jul 2026: Zoe wins both spend and tips
+      {
+        billId: "b-jul-1",
+        playerId: "p-zoe",
+        shareAmount: 40000,
+        paymentStatus: "paid",
+        paidAmount: 43000,
+      },
+      // Oct 2026: zero shareAmount, zero tips
+      {
+        billId: "b-oct-1",
+        playerId: "p-amy",
+        shareAmount: 0,
+        paymentStatus: "paid",
+        paidAmount: 0,
+      },
+    ]
+
+    const result = computeMonthlyBadgesByPlayer({ players, bills, splits })
+
+    expect(result.get("p-amy")).toEqual([
+      {
+        kind: "spending",
+        monthKey: "2026-11",
+        monthLabel: "Nov 2026",
+        amount: 50000,
+        stickerSrc: "/stickers/player-badges/spending-2026-11.webp",
+      },
+    ])
+    expect(result.get("p-ben")).toEqual([
+      {
+        kind: "tips",
+        monthKey: "2026-11",
+        monthLabel: "Nov 2026",
+        amount: 5000,
+        stickerSrc: "/stickers/player-badges/tips-2026-11.webp",
+      },
+    ])
+    expect(result.get("p-zoe")).toEqual([
+      {
+        kind: "spending",
+        monthKey: "2026-07",
+        monthLabel: "Jul 2026",
+        amount: 40000,
+        stickerSrc: null,
+      },
+      {
+        kind: "tips",
+        monthKey: "2026-07",
+        monthLabel: "Jul 2026",
+        amount: 3000,
+        stickerSrc: null,
+      },
+    ])
+  })
+
+  it("exposes currentMonthBadges on feeds and full monthlyBadges history on player detail", async () => {
+    const { db } = createTestDb()
+
+    const alice = await createPlayer(db, { name: "Alice" })
+    const bob = await createPlayer(db, { name: "Bob" })
+
+    // Oct 2026 bill: Alice is #1 spender, Bob is #1 tipper
+    const octBill = await createBill(db, {
+      merchant: "Sate Khas",
+      orderDate: "2026-10-12",
+      publish: true,
+      items: [
+        { id: "i1", name: "Sate", quantity: 1, bundleSize: 1, unitPrice: 60000 },
+        { id: "i2", name: "Teh", quantity: 1, bundleSize: 1, unitPrice: 20000 },
+      ],
+      adjustments: [],
+      billPlayers: [
+        { id: alice.id, playerId: alice.id, alias: "Alice" },
+        { id: bob.id, playerId: bob.id, alias: "Bob" },
+      ],
+      allocations: [
+        { itemKey: "i1", billPlayerKey: alice.id, quantity: 1 },
+        { itemKey: "i2", billPlayerKey: bob.id, quantity: 1 },
+      ],
+    })
+    const octDetail = await getPublicBillDetail(db, octBill.publicId)
+    const bobOctSplit = octDetail.bill.splits.find((s) => s.playerId === bob.id)!
+    await toggleBillPlayerPayment(
+      db,
+      {
+        billPlayerId: bobOctSplit.billPlayerId,
+        status: "paid",
+        paidAmount: bobOctSplit.totalOwed + 4000,
+      },
+      "admin@example.com"
+    )
+
+    // Nov 2026 bill: Alice is #1 spender AND #1 tipper
+    const novBill = await createBill(db, {
+      merchant: "Bakmi GM",
+      orderDate: "2026-11-18",
+      publish: true,
+      items: [
+        { id: "i1", name: "Bakmi", quantity: 1, bundleSize: 1, unitPrice: 50000 },
+        { id: "i2", name: "Pangsit", quantity: 1, bundleSize: 1, unitPrice: 25000 },
+      ],
+      adjustments: [],
+      billPlayers: [
+        { id: alice.id, playerId: alice.id, alias: "Alice" },
+        { id: bob.id, playerId: bob.id, alias: "Bob" },
+      ],
+      allocations: [
+        { itemKey: "i1", billPlayerKey: alice.id, quantity: 1 },
+        { itemKey: "i2", billPlayerKey: bob.id, quantity: 1 },
+      ],
+    })
+    const novDetail = await getPublicBillDetail(db, novBill.publicId)
+    const aliceNovSplit = novDetail.bill.splits.find(
+      (s) => s.playerId === alice.id
+    )!
+    await toggleBillPlayerPayment(
+      db,
+      {
+        billPlayerId: aliceNovSplit.billPlayerId,
+        status: "paid",
+        paidAmount: aliceNovSplit.totalOwed + 5000,
+      },
+      "admin@example.com"
+    )
+
+    // Home feed defaults to latest month (2026-11)
+    const home = await getHomeFeed(db)
+    expect(home.month).toBe("2026-11")
+    const homeAlice = home.players.find((p) => p.id === alice.id)!
+    const homeBob = home.players.find((p) => p.id === bob.id)!
+    expect(homeAlice.currentMonthBadges?.map((b) => `${b.kind}:${b.monthKey}`)).toEqual([
+      "spending:2026-11",
+      "tips:2026-11",
+    ])
+    expect(homeBob.currentMonthBadges).toEqual([])
+
+    // Ranks feed for Oct 2026 exposes Oct badges
+    const octRanks = await getRanksFeed(db, "monthly", "2026-10")
+    const octBob = octRanks.players.find((p) => p.id === bob.id)!
+    expect(octBob.currentMonthBadges?.map((b) => `${b.kind}:${b.monthKey}`)).toEqual([
+      "tips:2026-10",
+    ])
+
+    // Player detail returns full history across Oct + Nov
+    const aliceDetail = await getPlayerDetail(db, alice.id)
+    expect(
+      aliceDetail.monthlyBadges.map((b) => `${b.kind}:${b.monthKey}`)
+    ).toEqual(["spending:2026-11", "tips:2026-11", "spending:2026-10"])
+    expect(
+      aliceDetail.player.currentMonthBadges?.map((b) => `${b.kind}:${b.monthKey}`)
+    ).toEqual(["spending:2026-11", "tips:2026-11"])
+  })
+
+  it("computes latest standing change for crown takeover, close chase, and overtake deterministically", () => {
+    const players = [
+      { id: "p-alice", name: "Alice" },
+      { id: "p-bob", name: "Bob" },
+      { id: "p-cara", name: "Cara" },
+    ]
+
+    // Single bill has no prior baseline -> returns null
+    const singleBillChange = computeLatestStandingChange({
+      players,
+      bills: [
+        {
+          id: "b1",
+          merchant: "Bakmi GM",
+          orderDate: "2026-11-01",
+          publishedAt: "2026-11-01T12:00:00.000Z",
+        },
+      ],
+      splits: [
+        {
+          billPlayerId: "bp1",
+          billId: "b1",
+          playerId: "p-alice",
+          shareAmount: 50000,
+          paymentStatus: "unpaid",
+          paidAmount: null,
+          paidAt: null,
+        },
+      ],
+      targetMonth: "2026-11",
+    })
+    expect(singleBillChange).toBeNull()
+
+    // Crown takeover: Bob passes Alice for #1 on second bill
+    const crownChange = computeLatestStandingChange({
+      players,
+      bills: [
+        {
+          id: "b1",
+          merchant: "Bakmi GM",
+          orderDate: "2026-11-01",
+          publishedAt: "2026-11-01T12:00:00.000Z",
+        },
+        {
+          id: "b2",
+          merchant: "Sate Khas",
+          orderDate: "2026-11-05",
+          publishedAt: "2026-11-05T12:00:00.000Z",
+        },
+      ],
+      splits: [
+        {
+          billPlayerId: "bp1",
+          billId: "b1",
+          playerId: "p-alice",
+          shareAmount: 50000,
+          paymentStatus: "unpaid",
+          paidAmount: null,
+          paidAt: null,
+        },
+        {
+          billPlayerId: "bp2",
+          billId: "b1",
+          playerId: "p-bob",
+          shareAmount: 20000,
+          paymentStatus: "unpaid",
+          paidAmount: null,
+          paidAt: null,
+        },
+        {
+          billPlayerId: "bp3",
+          billId: "b2",
+          playerId: "p-bob",
+          shareAmount: 45000,
+          paymentStatus: "unpaid",
+          paidAmount: null,
+          paidAt: null,
+        },
+      ],
+      targetMonth: "2026-11",
+    })
+    expect(crownChange).not.toBeNull()
+    expect(crownChange?.board).toBe("spending")
+    expect(crownChange?.kind).toBe("crown")
+    expect(crownChange?.actorId).toBe("p-bob")
+    expect(crownChange?.targetId).toBe("p-alice")
+    expect(crownChange?.gapAmount).toBe(15000)
+    expect(crownChange?.triggerLabel).toBe("Sate Khas")
+
+    // Close chase: Alice closes within Rp5,000 of Bob on third bill
+    const chaseChange = computeLatestStandingChange({
+      players,
+      bills: [
+        {
+          id: "b1",
+          merchant: "Bakmi GM",
+          orderDate: "2026-11-01",
+          publishedAt: "2026-11-01T12:00:00.000Z",
+        },
+        {
+          id: "b2",
+          merchant: "Sate Khas",
+          orderDate: "2026-11-05",
+          publishedAt: "2026-11-05T12:00:00.000Z",
+        },
+        {
+          id: "b3",
+          merchant: "Kopi Kenangan",
+          orderDate: "2026-11-07",
+          publishedAt: "2026-11-07T12:00:00.000Z",
+        },
+      ],
+      splits: [
+        {
+          billPlayerId: "bp1",
+          billId: "b1",
+          playerId: "p-alice",
+          shareAmount: 50000,
+          paymentStatus: "unpaid",
+          paidAmount: null,
+          paidAt: null,
+        },
+        {
+          billPlayerId: "bp2",
+          billId: "b1",
+          playerId: "p-bob",
+          shareAmount: 20000,
+          paymentStatus: "unpaid",
+          paidAmount: null,
+          paidAt: null,
+        },
+        {
+          billPlayerId: "bp3",
+          billId: "b2",
+          playerId: "p-bob",
+          shareAmount: 45000,
+          paymentStatus: "unpaid",
+          paidAmount: null,
+          paidAt: null,
+        },
+        {
+          billPlayerId: "bp4",
+          billId: "b3",
+          playerId: "p-alice",
+          shareAmount: 11000,
+          paymentStatus: "unpaid",
+          paidAmount: null,
+          paidAt: null,
+        },
+      ],
+      targetMonth: "2026-11",
+    })
+    expect(chaseChange).not.toBeNull()
+    expect(chaseChange?.kind).toBe("close-chase")
+    expect(chaseChange?.actorId).toBe("p-alice")
+    expect(chaseChange?.targetId).toBe("p-bob")
+    expect(chaseChange?.gapAmount).toBe(4000)
+
+    // Newer tip crown takeover overrides earlier spending shift
+    const tipCrown = computeLatestStandingChange({
+      players,
+      bills: [
+        {
+          id: "b1",
+          merchant: "Bakmi GM",
+          orderDate: "2026-11-01",
+          publishedAt: "2026-11-01T12:00:00.000Z",
+        },
+        {
+          id: "b2",
+          merchant: "Sate Khas",
+          orderDate: "2026-11-05",
+          publishedAt: "2026-11-05T12:00:00.000Z",
+        },
+      ],
+      splits: [
+        {
+          billPlayerId: "bp1",
+          billId: "b1",
+          playerId: "p-alice",
+          shareAmount: 50000,
+          paymentStatus: "paid",
+          paidAmount: 53000,
+          paidAt: "2026-11-02T10:00:00.000Z",
+        },
+        {
+          billPlayerId: "bp2",
+          billId: "b2",
+          playerId: "p-cara",
+          shareAmount: 20000,
+          paymentStatus: "paid",
+          paidAmount: 27000,
+          paidAt: "2026-11-06T10:00:00.000Z",
+        },
+      ],
+      targetMonth: "2026-11",
+    })
+    expect(tipCrown).not.toBeNull()
+    expect(tipCrown?.board).toBe("tips")
+    expect(tipCrown?.kind).toBe("crown")
+    expect(tipCrown?.actorId).toBe("p-cara")
+    expect(tipCrown?.targetId).toBe("p-alice")
   })
 })

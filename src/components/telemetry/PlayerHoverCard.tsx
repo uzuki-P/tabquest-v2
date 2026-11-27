@@ -1,3 +1,4 @@
+import { Crown, Heart } from "@phosphor-icons/react"
 import { useRef, useState } from "react"
 import type { ReactNode } from "react"
 
@@ -9,15 +10,91 @@ import {
   getTipLeaderboard,
   tierForSpend,
 } from "@/domain/types"
-import type { PlayerSummary } from "@/domain/types"
+import type { PlayerMonthlyBadge, PlayerSummary } from "@/domain/types"
 import { useAppStore } from "@/lib/app-store"
+
+function monthlyBadgeLabel(badge: PlayerMonthlyBadge): string {
+  return badge.kind === "spending"
+    ? `#1 Spend · ${badge.monthLabel}`
+    : `#1 Tips · ${badge.monthLabel}`
+}
+
+/**
+ * Passive inline cue for a player's current-month #1 sticker(s).
+ * Visible on both mobile (where hover cards are disabled) and desktop.
+ */
+export function CurrentMonthBadgeCue({
+  badges,
+  size = "sm",
+  inverted = false,
+}: {
+  badges?: readonly PlayerMonthlyBadge[]
+  size?: "xs" | "sm" | "md"
+  inverted?: boolean
+}) {
+  if (!badges || badges.length === 0) return null
+
+  const imgSizeCls =
+    size === "xs"
+      ? "h-4 w-4"
+      : size === "md"
+        ? "h-7 w-7"
+        : "h-5 w-5"
+  const imgPx = size === "xs" ? 16 : size === "md" ? 28 : 20
+  const iconBoxCls =
+    size === "xs"
+      ? "h-4 w-4"
+      : size === "md"
+        ? "h-6 w-6"
+        : "h-5 w-5"
+  const iconPx = size === "xs" ? 10 : size === "md" ? 14 : 11
+
+  return (
+    <span className="inline-flex shrink-0 items-center gap-0.5">
+      {badges.map((badge) => {
+        const label = monthlyBadgeLabel(badge)
+        if (badge.stickerSrc) {
+          return (
+            <img
+              key={`${badge.kind}-${badge.monthKey}`}
+              src={badge.stickerSrc}
+              alt={label}
+              title={label}
+              width={imgPx}
+              height={imgPx}
+              className={`${imgSizeCls} shrink-0 object-contain drop-shadow-xs`}
+            />
+          )
+        }
+        const Icon = badge.kind === "spending" ? Crown : Heart
+        const toneCls = inverted
+          ? "border border-current text-current"
+          : badge.kind === "spending"
+            ? "border border-[var(--rt-amber)] bg-[var(--rt-amber-soft)] text-[var(--rt-amber-ink)]"
+            : "border border-[var(--rt-teal)] bg-[var(--rt-teal-soft)] text-[var(--rt-teal-ink)]"
+        return (
+          <span
+            key={`${badge.kind}-${badge.monthKey}`}
+            title={label}
+            aria-label={label}
+            className={`inline-flex ${iconBoxCls} shrink-0 items-center justify-center rounded-sm ${toneCls}`}
+          >
+            <Icon size={iconPx} weight="fill" />
+          </span>
+        )
+      })}
+    </span>
+  )
+}
 
 export function PlayerHoverCard({
   player,
   children,
+  className = "",
 }: {
   player: PlayerSummary
   children: ReactNode
+  className?: string
 }) {
   const { players } = useAppStore()
   const [open, setOpen] = useState(false)
@@ -47,11 +124,11 @@ export function PlayerHoverCard({
   const tier = tierForSpend(player.monthlySpend, topSpend)
   const owed = getPlayerUnpaidTotal(player)
 
-  const stickerSrc = null
+  const currentBadges = player.currentMonthBadges ?? []
 
   return (
     <span
-      className="relative inline-flex max-w-full"
+      className={`relative inline-flex max-w-full ${className}`.trim()}
       onMouseEnter={show}
       onMouseLeave={hide}
       onFocus={show}
@@ -74,14 +151,38 @@ export function PlayerHoverCard({
                 </p>
               </div>
             </div>
-            {stickerSrc && (
-              <img
-                src={stickerSrc}
-                alt="Monthly #1 sticker"
-                width={44}
-                height={44}
-                className="h-11 w-11 shrink-0 object-contain"
-              />
+            {currentBadges.length > 0 && (
+              <div className="flex shrink-0 items-center gap-1">
+                {currentBadges.map((b) => {
+                  const label = monthlyBadgeLabel(b)
+                  if (b.stickerSrc) {
+                    return (
+                      <img
+                        key={`${b.kind}-${b.monthKey}`}
+                        src={b.stickerSrc}
+                        alt={label}
+                        width={44}
+                        height={44}
+                        className="h-11 w-11 shrink-0 object-contain drop-shadow-xs"
+                      />
+                    )
+                  }
+                  const Icon = b.kind === "spending" ? Crown : Heart
+                  const toneCls =
+                    b.kind === "spending"
+                      ? "border-[var(--rt-amber)] bg-[var(--rt-amber-soft)] text-[var(--rt-amber-ink)]"
+                      : "border-[var(--rt-teal)] bg-[var(--rt-teal-soft)] text-[var(--rt-teal-ink)]"
+                  return (
+                    <span
+                      key={`${b.kind}-${b.monthKey}`}
+                      aria-label={label}
+                      className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded border-2 ${toneCls}`}
+                    >
+                      <Icon size={18} weight="fill" />
+                    </span>
+                  )
+                })}
+              </div>
             )}
           </div>
 
@@ -93,6 +194,22 @@ export function PlayerHoverCard({
                 {player.badge}
               </span>
             )}
+            {currentBadges.map((b) => {
+              const Icon = b.kind === "spending" ? Crown : Heart
+              const toneCls =
+                b.kind === "spending"
+                  ? "border-[var(--rt-amber)] bg-[var(--rt-amber-soft)] text-[var(--rt-amber-ink)]"
+                  : "border-[var(--rt-teal)] bg-[var(--rt-teal-soft)] text-[var(--rt-teal-ink)]"
+              return (
+                <span
+                  key={`pill-${b.kind}-${b.monthKey}`}
+                  className={`inline-flex items-center gap-1 rounded border px-1.5 py-0.5 font-arcade-mono text-[11px] font-bold ${toneCls}`}
+                >
+                  <Icon size={11} weight="fill" />
+                  {monthlyBadgeLabel(b)}
+                </span>
+              )
+            })}
           </div>
 
           <div className="mt-3 grid grid-cols-3 gap-2 border-t border-[var(--rt-border-soft)] pt-2.5 font-arcade-mono text-[12px]">
