@@ -27,6 +27,7 @@ import {
 } from "@/server/services/payments"
 import {
   createPlayer,
+  linkMyPlayer,
   listAdminPlayers,
   updatePlayer,
 } from "@/server/services/players"
@@ -505,5 +506,111 @@ describe("Phase 4 D1 services", () => {
     )
     expect(polled.status).toBe("completed")
     expect(polled.receipt?.merchant).toBe("Kopi Tuku")
+  })
+
+  it("allows unlinked signed-in users to self-link to an active unlinked player while blocking hijacks and reserved emails", async () => {
+    const { db } = createTestDb()
+    const now = new Date("2026-11-26T10:00:00.000Z")
+
+    await db.insert(schema.user).values([
+      {
+        id: "user-a",
+        name: "Alice",
+        email: "alice@example.com",
+        emailVerified: true,
+        role: "user",
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        id: "user-b",
+        name: "Bob",
+        email: "bob@example.com",
+        emailVerified: true,
+        role: "user",
+        createdAt: now,
+        updatedAt: now,
+      },
+    ])
+
+    const alicePlayer = await createPlayer(db, { name: "Alice" })
+    const bobPlayer = await createPlayer(db, { name: "Bob" })
+    const reservedPlayer = await createPlayer(db, {
+      name: "Charlie",
+      email: "charlie@example.com",
+    })
+    const archivedPlayer = await createPlayer(db, { name: "Oldie" })
+    await updatePlayer(db, null, archivedPlayer.id, { archived: true })
+
+    // Cannot claim a player reserved for another email
+    await expect(
+      linkMyPlayer(db, {
+        userId: "user-a",
+        userEmail: "ALICE@example.com",
+        playerId: reservedPlayer.id,
+      })
+    ).rejects.toMatchObject({ status: 409, code: "PLAYER_PRELINKED_OTHER_EMAIL" })
+
+    // Cannot claim an archived player
+    await expect(
+      linkMyPlayer(db, {
+        userId: "user-a",
+        userEmail: "alice@example.com",
+        playerId: archivedPlayer.id,
+      })
+    ).rejects.toMatchObject({ status: 400, code: "PLAYER_ARCHIVED" })
+
+    // Unknown player -> 404
+    await expect(
+      linkMyPlayer(db, {
+        userId: "user-a",
+        userEmail: "alice@example.com",
+        playerId: "missing-player-id",
+      })
+    ).rejects.toMatchObject({ status: 404, code: "PLAYER_NOT_FOUND" })
+
+    // Happy path: Alice self-links
+    const linked = await linkMyPlayer(db, {
+      userId: "user-a",
+      userEmail: "  ALICE@Example.COM ",
+      playerId: alicePlayer.id,
+    })
+    expect(linked).toEqual({
+      linkedPlayerId: alicePlayer.id,
+      playerName: "Alice",
+    })
+
+    const [aliceRow] = await db
+      .select()
+      .from(schema.players)
+      .where(eq(schema.players.id, alicePlayer.id))
+    expect(aliceRow?.userId).toBe("user-a")
+    expect(aliceRow?.email).toBe("alice@example.com")
+
+    // Idempotent repeat call for the same player succeeds
+    const repeat = await linkMyPlayer(db, {
+      userId: "user-a",
+      userEmail: "alice@example.com",
+      playerId: alicePlayer.id,
+    })
+    expect(repeat.linkedPlayerId).toBe(alicePlayer.id)
+
+    // Already linked user cannot switch to another player
+    await expect(
+      linkMyPlayer(db, {
+        userId: "user-a",
+        userEmail: "alice@example.com",
+        playerId: bobPlayer.id,
+      })
+    ).rejects.toMatchObject({ status: 409, code: "ACCOUNT_ALREADY_LINKED" })
+
+    // Another user cannot hijack Alice's linked player
+    await expect(
+      linkMyPlayer(db, {
+        userId: "user-b",
+        userEmail: "bob@example.com",
+        playerId: alicePlayer.id,
+      })
+    ).rejects.toMatchObject({ status: 409, code: "PLAYER_ALREADY_LINKED" })
   })
 })

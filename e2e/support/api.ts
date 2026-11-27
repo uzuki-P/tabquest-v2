@@ -91,7 +91,7 @@ export interface ApiMock {
 }
 
 export interface MockOptions {
-  as?: "guest" | "admin"
+  as?: "guest" | "admin" | "unlinked"
   /** Extra milliseconds before answering requests whose path matches. */
   delays?: { match: RegExp; ms: number }[]
 }
@@ -134,6 +134,14 @@ function mutationResponse(method: string, path: string, body: unknown): unknown 
   if (path === "/api/me/avatar" && method === "POST") {
     return { avatarUrl: "/api/public/players/e2e/avatar" }
   }
+  if (path === "/api/me/link-player" && method === "POST") {
+    const playerId = String(b.playerId ?? "")
+    const found = latestHome.players.find((p) => p.id === playerId)
+    return {
+      linkedPlayerId: playerId,
+      playerName: found?.name ?? "Player",
+    }
+  }
   return { ok: true }
 }
 
@@ -165,7 +173,24 @@ export async function mockApi(
   { as = "guest", delays = [] }: MockOptions = {}
 ): Promise<ApiMock> {
   const mock: ApiMock = { mutations: [] }
-  const me = as === "admin" ? data.adminMe : GUEST_ME
+  const me: MeResponse =
+    as === "admin"
+      ? { ...data.adminMe }
+      : as === "unlinked"
+        ? {
+            authenticated: true,
+            user: {
+              id: "e2e-unlinked-user",
+              name: "New Friend",
+              email: "new.friend@example.com",
+              image: null,
+              role: "user",
+            },
+            isAdmin: false,
+            linkedPlayerId: null,
+            paymentMethods: data.adminMe.paymentMethods,
+          }
+        : GUEST_ME
 
   await page.route("**/api/**", async (route) => {
     const req = route.request()
@@ -191,7 +216,7 @@ export async function mockApi(
       if (path === "/api/auth/get-session") {
         return json(
           route,
-          as === "admin" && me.user
+          me.authenticated && me.user
             ? {
                 session: {
                   id: "e2e-session",
@@ -209,7 +234,14 @@ export async function mockApi(
     if (method !== "GET") {
       const body = bodyOf(req)
       mock.mutations.push({ method, path, body })
-      return json(route, mutationResponse(method, path, body))
+      const res = mutationResponse(method, path, body)
+      if (path === "/api/me/link-player" && method === "POST") {
+        const linkedId = (res as { linkedPlayerId?: string }).linkedPlayerId
+        if (linkedId) {
+          me.linkedPlayerId = linkedId
+        }
+      }
+      return json(route, res)
     }
 
     if (path === "/api/me") return json(route, me)

@@ -856,7 +856,7 @@ export function PayAllCard({
   onNotify: (player: PlayerSummary, amount: number) => void | Promise<boolean>
   onPreviewChange: (active: boolean) => void
 }) {
-  const { paymentMethods, me, signingIn } = useAppStore()
+  const { paymentMethods, me, signingIn, openIdentifyModal } = useAppStore()
   const owed = getPlayerUnpaidTotal(player)
   const roundOptions = getRoundUpOptions(owed)
   const [selectedAmount, setSelectedAmount] = useState<number>(owed)
@@ -880,6 +880,20 @@ export function PayAllCard({
   const underpay = Math.max(0, owed - selectedAmount)
   const projection = projectTipRank(players, player.id, selectedTip)
   const targets = getTipTargets(players, player.id)
+
+  const hasNextTarget =
+    targets.currentRank !== 1 &&
+    targets.toNext !== null &&
+    targets.nextRank !== null
+  const hasFirstTarget = targets.currentRank !== 1 && targets.toFirst !== null
+  const quickAmountCount =
+    roundOptions.length + (hasNextTarget ? 1 : 0) + (hasFirstTarget ? 1 : 0)
+  const quickAmountGridCls =
+    quickAmountCount === 4
+      ? "grid grid-cols-2 gap-1.5 sm:grid-cols-4"
+      : quickAmountCount <= 3
+        ? "grid grid-cols-3 gap-1.5"
+        : "grid grid-cols-2 gap-1.5 sm:grid-cols-3"
 
   const handleChipToggle = (amount: number) => {
     if (amount === selectedAmount && amount !== owed) {
@@ -1056,7 +1070,7 @@ export function PayAllCard({
         open={reportOpen}
         onOpenChange={(next) => !submitting && setReportOpen(next)}
       >
-        <DialogContent className="rt2-scroll-fade-y max-h-[92dvh] gap-3 overflow-y-auto p-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:max-w-2xl">
+        <DialogContent className="max-h-[96dvh] gap-3 overflow-y-auto p-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:max-w-2xl">
           <div className="flex items-baseline justify-between gap-3">
             <DialogTitle className="rt2-display text-xl font-extrabold">
               Pay &amp; report
@@ -1068,7 +1082,7 @@ export function PayAllCard({
 
           <div className="space-y-3">
             <div
-              className="grid grid-cols-3 gap-1.5"
+              className={quickAmountGridCls}
               role="group"
               aria-label="Quick amounts"
             >
@@ -1316,12 +1330,24 @@ export function PayAllCard({
               >
                 {submitting ? "Sending..." : `Notify ${formatRupiah(selectedAmount)}`}
               </button>
+            ) : !me.linkedPlayerId ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setReportOpen(false)
+                  openIdentifyModal()
+                }}
+                className="rt2-focus rt2-btn-primary inline-flex min-h-[44px] cursor-pointer items-center justify-center gap-1.5 rounded px-3 text-[14px] font-bold"
+              >
+                <UserCircle size={16} weight="bold" />
+                Link your player
+              </button>
             ) : (
               <div
                 title="Only the linked account for this player can submit a transfer claim"
                 className="flex min-h-[44px] items-center justify-center rounded border-2 border-dashed border-[var(--rt-ui-border)] bg-[var(--rt-bg)] px-2.5 text-center text-[12px] font-bold text-[var(--rt-muted)]"
               >
-                {me.linkedPlayerId ? "Viewing another player" : "Account not linked"}
+                Viewing another player
               </div>
             )}
           </div>
@@ -1483,8 +1509,16 @@ export function AppHeader({
   onSignOut: () => void
 }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
-  const { branding, me, players, you, setActivePlayerId, authPending, signingIn } =
-    useAppStore()
+  const {
+    branding,
+    me,
+    players,
+    you,
+    setActivePlayerId,
+    authPending,
+    signingIn,
+    openIdentifyModal,
+  } = useAppStore()
   const [themeMenuOpen, setThemeMenuOpen] = useState(false)
   const [accountMenuOpen, setAccountMenuOpen] = useState(false)
 
@@ -1797,7 +1831,7 @@ export function AppHeader({
                 )}
 
                 <div className="mt-1.5 space-y-1">
-                  {me.linkedPlayerId && (
+                  {me.linkedPlayerId ? (
                     <Link
                       to="/players/$playerId"
                       params={{ playerId: me.linkedPlayerId }}
@@ -1807,6 +1841,18 @@ export function AppHeader({
                       <UserCircle size={16} weight="bold" />
                       My dossier
                     </Link>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAccountMenuOpen(false)
+                        openIdentifyModal()
+                      }}
+                      className="rt2-focus flex min-h-[38px] w-full cursor-pointer items-center gap-2 rounded px-2.5 text-left text-[14px] font-bold text-[var(--rt-teal-ink)] hover:bg-[var(--rt-bg)]"
+                    >
+                      <UserCircle size={16} weight="bold" />
+                      Link my player
+                    </button>
                   )}
                   <button
                     type="button"

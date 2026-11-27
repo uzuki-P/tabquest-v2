@@ -5,6 +5,7 @@ import {
   PREVIOUS_MONTH,
   data,
   latestHome,
+  mockApi,
 } from "./support/api"
 import { expect, test, waitForLoaded } from "./support/test"
 
@@ -192,5 +193,45 @@ test.describe("player dossier", () => {
     await page.goto("/")
     await waitForLoaded(page)
     await expect(page.getByRole("heading", { level: 1, name: `Bills to pay (${latestHome.unpaidBills.length} open)` })).toBeVisible()
+  })
+})
+
+test.describe("first-login self-identification", () => {
+  test("prompts an unlinked signed-in user to identify themselves and links their chosen player", async ({ page }) => {
+    const api = await mockApi(page, { as: "unlinked" })
+    const unlinkedPlayer = latestHome.players.find(
+      (p) => p.archivedAt === null && p.userId === null
+    )!
+
+    await page.goto("/")
+    await waitForLoaded(page)
+
+    const dialog = page.getByRole("dialog", { name: "Who are you?" })
+    await expect(dialog).toBeVisible()
+    await expect(dialog.getByText("new.friend@example.com")).toBeVisible()
+
+    // Skipping dismisses for this session, and account menu can reopen it
+    await dialog.getByRole("button", { name: "Not on the list / Skip" }).click()
+    await expect(dialog).toBeHidden()
+
+    await page.getByRole("button", { name: /New Friend/i }).click()
+    await page.getByRole("button", { name: "Link my player" }).click()
+    await expect(dialog).toBeVisible()
+
+    // Selecting a player and confirming sends POST /api/me/link-player
+    await dialog
+      .getByRole("radio", { name: new RegExp(`\\b${unlinkedPlayer.name}\\b`) })
+      .click()
+    await dialog
+      .getByRole("button", { name: `Confirm: I'm ${unlinkedPlayer.name}` })
+      .click()
+
+    await expect(dialog).toBeHidden()
+    expect(api.mutations).toContainEqual({
+      method: "POST",
+      path: "/api/me/link-player",
+      body: { playerId: unlinkedPlayer.id },
+    })
+    await expect(page.getByText(`Pay all (${unlinkedPlayer.name})`)).toBeVisible()
   })
 })

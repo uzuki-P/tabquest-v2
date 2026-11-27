@@ -24,6 +24,7 @@ import { Route as ApiAdminSettingsRouteImport } from './routes/api/admin/setting
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiMeIndexRouteImport } from './routes/api/me/index'
 import { Route as ApiMeAvatarRouteImport } from './routes/api/me/avatar'
+import { Route as ApiMeLinkPlayerRouteImport } from './routes/api/me/link-player'
 import { Route as ApiMeProfileRouteImport } from './routes/api/me/profile'
 import { Route as ApiMeTransferClaimsRouteImport } from './routes/api/me/transfer-claims'
 import { Route as ApiPublicHomeRouteImport } from './routes/api/public/home'
@@ -121,6 +122,11 @@ const ApiMeIndexRoute = ApiMeIndexRouteImport.update({
 const ApiMeAvatarRoute = ApiMeAvatarRouteImport.update({
   id: '/api/me/avatar',
   path: '/api/me/avatar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiMeLinkPlayerRoute = ApiMeLinkPlayerRouteImport.update({
+  id: '/api/me/link-player',
+  path: '/api/me/link-player',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiMeProfileRoute = ApiMeProfileRouteImport.update({
@@ -260,6 +266,7 @@ export interface FileRoutesByFullPath {
   '/api/admin/settings': typeof ApiAdminSettingsRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/me/avatar': typeof ApiMeAvatarRoute
+  '/api/me/link-player': typeof ApiMeLinkPlayerRoute
   '/api/me/profile': typeof ApiMeProfileRoute
   '/api/me/transfer-claims': typeof ApiMeTransferClaimsRoute
   '/api/public/home': typeof ApiPublicHomeRoute
@@ -299,6 +306,7 @@ export interface FileRoutesByTo {
   '/api/admin/settings': typeof ApiAdminSettingsRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/me/avatar': typeof ApiMeAvatarRoute
+  '/api/me/link-player': typeof ApiMeLinkPlayerRoute
   '/api/me/profile': typeof ApiMeProfileRoute
   '/api/me/transfer-claims': typeof ApiMeTransferClaimsRoute
   '/api/public/home': typeof ApiPublicHomeRoute
@@ -340,6 +348,7 @@ export interface FileRoutesById {
   '/api/admin/settings': typeof ApiAdminSettingsRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/me/avatar': typeof ApiMeAvatarRoute
+  '/api/me/link-player': typeof ApiMeLinkPlayerRoute
   '/api/me/profile': typeof ApiMeProfileRoute
   '/api/me/transfer-claims': typeof ApiMeTransferClaimsRoute
   '/api/public/home': typeof ApiPublicHomeRoute
@@ -382,6 +391,7 @@ export interface FileRouteTypes {
     | '/api/admin/settings'
     | '/api/auth/$'
     | '/api/me/avatar'
+    | '/api/me/link-player'
     | '/api/me/profile'
     | '/api/me/transfer-claims'
     | '/api/public/home'
@@ -421,6 +431,7 @@ export interface FileRouteTypes {
     | '/api/admin/settings'
     | '/api/auth/$'
     | '/api/me/avatar'
+    | '/api/me/link-player'
     | '/api/me/profile'
     | '/api/me/transfer-claims'
     | '/api/public/home'
@@ -461,6 +472,7 @@ export interface FileRouteTypes {
     | '/api/admin/settings'
     | '/api/auth/$'
     | '/api/me/avatar'
+    | '/api/me/link-player'
     | '/api/me/profile'
     | '/api/me/transfer-claims'
     | '/api/public/home'
@@ -498,6 +510,7 @@ export interface RootRouteChildren {
   ApiAdminSettingsRoute: typeof ApiAdminSettingsRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiMeAvatarRoute: typeof ApiMeAvatarRoute
+  ApiMeLinkPlayerRoute: typeof ApiMeLinkPlayerRoute
   ApiMeProfileRoute: typeof ApiMeProfileRoute
   ApiMeTransferClaimsRoute: typeof ApiMeTransferClaimsRoute
   ApiPublicHomeRoute: typeof ApiPublicHomeRoute
@@ -626,6 +639,13 @@ declare module '@tanstack/react-router' {
       path: '/api/me/avatar'
       fullPath: '/api/me/avatar'
       preLoaderRoute: typeof ApiMeAvatarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/me/link-player': {
+      id: '/api/me/link-player'
+      path: '/api/me/link-player'
+      fullPath: '/api/me/link-player'
+      preLoaderRoute: typeof ApiMeLinkPlayerRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/me/profile': {
@@ -849,6 +869,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAdminSettingsRoute: ApiAdminSettingsRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiMeAvatarRoute: ApiMeAvatarRoute,
+  ApiMeLinkPlayerRoute: ApiMeLinkPlayerRoute,
   ApiMeProfileRoute: ApiMeProfileRoute,
   ApiMeTransferClaimsRoute: ApiMeTransferClaimsRoute,
   ApiPublicHomeRoute: ApiPublicHomeRoute,

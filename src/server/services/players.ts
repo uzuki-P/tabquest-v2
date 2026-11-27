@@ -1,4 +1,4 @@
-import { and, asc, eq, ne } from "drizzle-orm"
+import { and, asc, eq, isNull, ne } from "drizzle-orm"
 import { uuidv7 } from "uuidv7"
 import { z } from "zod"
 
@@ -31,8 +31,13 @@ export const updatePlayerSchema = z.object({
   removeAvatar: z.boolean().optional(),
 })
 
+export const linkMyPlayerSchema = z.object({
+  playerId: z.string().trim().min(1, "Please select a player."),
+})
+
 export type CreatePlayerInput = z.infer<typeof createPlayerSchema>
 export type UpdatePlayerInput = z.infer<typeof updatePlayerSchema>
+export type LinkMyPlayerInput = z.infer<typeof linkMyPlayerSchema>
 
 export interface AdminPlayerRow {
   id: string
@@ -368,4 +373,114 @@ export async function deleteAdminUser(
   ])
 
   return { deletedUserId: target.id, email: target.email }
+}
+
+/**
+ * Self-links a signed-in user whose email was not pre-linked to an active,
+ * unlinked player profile. Refuses to hijack already-linked players or players
+ * explicitly pre-linked to a different email address.
+ */
+export async function linkMyPlayer(
+  db: Database,
+  params: {
+    userId: string
+    userEmail: string | null | undefined
+    playerId: string
+  }
+): Promise<{ linkedPlayerId: string; playerName: string }> {
+  const input = linkMyPlayerSchema.parse({ playerId: params.playerId })
+  const normalizedEmail = normalizeEmail(params.userEmail)
+
+  const [existingLinkedRows, targetRows] = await db.batch([
+    db
+      .select({ id: players.id, name: players.name })
+      .from(players)
+      .where(eq(players.userId, params.userId))
+      .limit(1),
+    db
+      .select({
+        id: players.id,
+        name: players.name,
+        userId: players.userId,
+        email: players.email,
+        archivedAt: players.archivedAt,
+      })
+      .from(players)
+      .where(eq(players.id, input.playerId))
+      .limit(1),
+  ])
+
+  const existingLinked = existingLinkedRows[0]
+  if (existingLinked) {
+    if (existingLinked.id === input.playerId) {
+      return {
+        linkedPlayerId: existingLinked.id,
+        playerName: existingLinked.name,
+      }
+    }
+    throw new ServiceError(
+      409,
+      "ACCOUNT_ALREADY_LINKED",
+      `Your account is already linked to ${existingLinked.name}. Ask an admin to change it.`
+    )
+  }
+
+  const target = targetRows[0]
+  if (!target) {
+    throw new ServiceError(404, "PLAYER_NOT_FOUND", "Player not found.")
+  }
+
+  if (target.archivedAt !== null) {
+    throw new ServiceError(
+      400,
+      "PLAYER_ARCHIVED",
+      "That player profile is archived. Ask an admin to restore or link it."
+    )
+  }
+
+  if (target.userId !== null && target.userId !== params.userId) {
+    throw new ServiceError(
+      409,
+      "PLAYER_ALREADY_LINKED",
+      "That player is already linked to another account."
+    )
+  }
+
+  if (target.email !== null && target.email !== normalizedEmail) {
+    throw new ServiceError(
+      409,
+      "PLAYER_PRELINKED_OTHER_EMAIL",
+      "That player is reserved for another email address. Ask an admin if this is a mistake."
+    )
+  }
+
+  const now = nowUtcIso()
+  const updated = await db
+    .update(players)
+    .set({
+      userId: params.userId,
+      email: normalizedEmail ?? target.email,
+      updatedAt: now,
+    })
+    .where(
+      and(
+        eq(players.id, target.id),
+        isNull(players.userId),
+        isNull(players.archivedAt)
+      )
+    )
+    .returning({ id: players.id, name: players.name })
+
+  if (!updated[0]) {
+    throw new ServiceError(
+      409,
+      "PLAYER_ALREADY_LINKED",
+      "That player was just linked to another account."
+    )
+  }
+
+  return {
+    linkedPlayerId: updated[0].id,
+    playerName: updated[0].name,
+  }
 }

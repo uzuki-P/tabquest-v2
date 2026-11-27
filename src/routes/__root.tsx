@@ -10,6 +10,7 @@ import { useEffect } from "react"
 import type { ReactNode } from "react"
 
 import { DevBadge } from "@/components/DevBadge"
+import { IdentifyPlayerDialog } from "@/components/telemetry/IdentifyPlayerDialog"
 import {
   AdminCollectDrawer,
   AppHeader,
@@ -217,6 +218,8 @@ function AppShell() {
           </div>
         </div>
       )}
+
+      <IdentifyPlayerDialog />
 
       {role === "admin" && (
         <AdminCollectDrawer

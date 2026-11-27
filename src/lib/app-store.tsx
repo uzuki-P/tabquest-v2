@@ -41,6 +41,34 @@ export type HitEvent = {
 
 const THEME_STORAGE_KEY = "tq-theme-pref"
 const CALLSIGN_STORAGE_KEY = "tq-selected-player"
+const IDENTIFY_DISMISSED_PREFIX = "tq-identify-dismissed:"
+
+function isIdentifyDismissed(userId: string): boolean {
+  try {
+    return (
+      window.sessionStorage.getItem(`${IDENTIFY_DISMISSED_PREFIX}${userId}`) ===
+      "1"
+    )
+  } catch {
+    return false
+  }
+}
+
+function markIdentifyDismissed(userId: string): void {
+  try {
+    window.sessionStorage.setItem(`${IDENTIFY_DISMISSED_PREFIX}${userId}`, "1")
+  } catch {
+    // ignore storage errors
+  }
+}
+
+function clearIdentifyDismissed(userId: string): void {
+  try {
+    window.sessionStorage.removeItem(`${IDENTIFY_DISMISSED_PREFIX}${userId}`)
+  } catch {
+    // ignore storage errors
+  }
+}
 
 async function apiFetch<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, {
@@ -109,6 +137,9 @@ interface AppStoreValue {
   resolvedTheme: "light" | "dark"
   drawerOpen: boolean
   setDrawerOpen: (open: boolean) => void
+  identifyModalOpen: boolean
+  openIdentifyModal: () => void
+  dismissIdentifyModal: () => void
   preview: boolean
   setPreview: (active: boolean) => void
   hit: HitEvent | null
@@ -185,6 +216,7 @@ interface AppStoreValue {
   deleteAdminUser: (userId: string) => Promise<boolean>
 
   // Self-service profile & avatar
+  linkMyPlayer: (playerId: string) => Promise<{ ok: boolean; error?: string }>
   uploadMyAvatar: (blob: Blob) => Promise<string | null>
   removeMyAvatar: () => Promise<boolean>
   updateMyUsername: (name: string) => Promise<boolean>
@@ -240,6 +272,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   const [themePref, setThemePrefState] = useState<ThemePreference>("system")
   const [systemDark, setSystemDark] = useState<boolean>(false)
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false)
+  const [identifyModalOpen, setIdentifyModalOpen] = useState<boolean>(false)
   const [preview, setPreview] = useState<boolean>(false)
   const [hit, setHit] = useState<HitEvent | null>(null)
   const [queuedCollectHit, setQueuedCollectHit] = useState<HitEvent | null>(
@@ -426,6 +459,36 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     }
   }, [me.isAdmin, refreshAdmin])
 
+  // Prompt unlinked signed-in users to identify themselves on first login
+  useEffect(() => {
+    if (authPending || !meLoaded || loading) return
+    if (!me.authenticated || !me.user || me.linkedPlayerId) {
+      setIdentifyModalOpen(false)
+      return
+    }
+    if (!isIdentifyDismissed(me.user.id)) {
+      setIdentifyModalOpen(true)
+    }
+  }, [
+    authPending,
+    meLoaded,
+    loading,
+    me.authenticated,
+    me.user?.id,
+    me.linkedPlayerId,
+  ])
+
+  const openIdentifyModal = useCallback(() => {
+    setIdentifyModalOpen(true)
+  }, [])
+
+  const dismissIdentifyModal = useCallback(() => {
+    setIdentifyModalOpen(false)
+    if (me.user?.id) {
+      markIdentifyDismissed(me.user.id)
+    }
+  }, [me.user?.id])
+
   const setSelectedMonth = useCallback(
     (month: string) => {
       setSelectedMonthState(month)
@@ -452,15 +515,20 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   )
 
   const handleSignOut = useCallback(async () => {
+    const signingOutUserId = me.user?.id
     try {
       await signOut()
+      setIdentifyModalOpen(false)
+      if (signingOutUserId) {
+        clearIdentifyDismissed(signingOutUserId)
+      }
       setMe(EMPTY_ME)
       pushToast("Signed out.")
       await refreshWorkspace()
     } catch (err) {
       pushToast(err instanceof Error ? err.message : "Sign-out failed.")
     }
-  }, [pushToast, refreshWorkspace])
+  }, [me.user?.id, pushToast, refreshWorkspace])
 
   const handleNotify = useCallback(
     async (targetPlayer: PlayerSummary, amount: number): Promise<boolean> => {
@@ -854,6 +922,47 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     [pushToast, updatePlayer]
   )
 
+  const linkMyPlayer = useCallback(
+    async (playerId: string): Promise<{ ok: boolean; error?: string }> => {
+      try {
+        const res = await apiFetch<{
+          linkedPlayerId: string
+          playerName: string
+        }>("/api/me/link-player", {
+          method: "POST",
+          body: JSON.stringify({ playerId }),
+        })
+        setActivePlayerId(res.linkedPlayerId)
+        setIdentifyModalOpen(false)
+        if (me.user?.id) {
+          clearIdentifyDismissed(me.user.id)
+        }
+        pushToast(`Linked your account to ${res.playerName}.`)
+        await Promise.all([
+          refreshMe(),
+          refreshWorkspace(),
+          ...(me.isAdmin ? [refreshAdmin()] : []),
+        ])
+        return { ok: true }
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Failed to link player."
+        pushToast(message, "error")
+        void refreshWorkspace()
+        return { ok: false, error: message }
+      }
+    },
+    [
+      me.isAdmin,
+      me.user?.id,
+      pushToast,
+      refreshAdmin,
+      refreshMe,
+      refreshWorkspace,
+      setActivePlayerId,
+    ]
+  )
+
   const updateMyUsername = useCallback(
     async (name: string): Promise<boolean> => {
       const trimmed = name.trim()
@@ -1084,6 +1193,9 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         resolvedTheme,
         drawerOpen,
         setDrawerOpen,
+        identifyModalOpen,
+        openIdentifyModal,
+        dismissIdentifyModal,
         preview,
         setPreview,
         hit,
@@ -1112,6 +1224,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         setPlayerNameLocked,
         removePlayerAvatarAdmin,
         deleteAdminUser,
+        linkMyPlayer,
         uploadMyAvatar,
         removeMyAvatar,
         updateMyUsername,
