@@ -233,7 +233,7 @@ function HomePage() {
                             : "border-transparent bg-transparent p-0.5 text-[var(--rt-ink)] hover:scale-110"
                     }`}
                   >
-                    <span className="relative shrink-0">
+                    <span className="relative inline-flex shrink-0">
                       <PlayerAvatar player={p} size="sm" />
                       <span
                         aria-hidden="true"

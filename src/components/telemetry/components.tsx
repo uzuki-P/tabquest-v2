@@ -220,13 +220,13 @@ export function PlayerAvatar({
         ...(heroStyle ? { viewTransitionName: "hero-player-avatar" } : {}),
         ...(showImg ? {} : { backgroundColor: bgColor, color: "#FFFFFF" }),
       }}
-      className={`inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full font-arcade-mono font-bold ${sizeCls} ${className}`}
+      className={`inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full align-middle font-arcade-mono font-bold ${sizeCls} ${className}`}
     >
       {showImg ? (
         <img
           src={player.avatarUrl ?? undefined}
           alt={player.name}
-          className="h-full w-full object-cover"
+          className="block h-full w-full object-cover"
         />
       ) : (
         player.avatar

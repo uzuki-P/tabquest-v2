@@ -291,7 +291,7 @@ function PlayerDetailRoute() {
         <section className="rounded border-2 border-[var(--rt-border)] bg-[var(--rt-surface)] p-5">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="flex items-center gap-4">
-              <div className="relative">
+              <div className="relative inline-flex shrink-0">
                 <PlayerAvatar player={player} size="xl" chamfer heroStyle />
                 {canEditAvatar && (
                   <button
