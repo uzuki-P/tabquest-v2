@@ -30,7 +30,7 @@ export function DevBadge() {
   if (!import.meta.env.DEV || !pos) return null
 
   const clamp = (x: number, y: number): Pos => {
-    const w = ref.current?.offsetWidth ?? 220
+    const w = ref.current?.offsetWidth ?? 300
     const h = ref.current?.offsetHeight ?? 36
     return {
       x: Math.min(Math.max(MARGIN, x), window.innerWidth - w - MARGIN),
@@ -60,19 +60,30 @@ export function DevBadge() {
         }
       }}
       style={{ left: pos.x, top: pos.y, touchAction: "none" }}
-      className="fixed z-40 inline-flex cursor-grab items-center gap-2 rounded bg-fuchsia-700 px-2.5 py-1 font-mono text-[12px] font-extrabold tracking-wider text-white shadow-lg ring-2 ring-white/70 select-none active:cursor-grabbing"
+      className="fixed z-40 inline-flex max-w-[calc(100vw-16px)] cursor-grab flex-wrap items-center gap-1.5 rounded bg-fuchsia-700 px-2.5 py-1 font-mono text-[12px] font-extrabold tracking-wider text-white shadow-lg ring-2 ring-white/70 select-none active:cursor-grabbing"
     >
       <span>LOCAL DEV &middot; LOCAL DB</span>
       {store && (
-        <button
-          type="button"
-          onPointerDown={(e) => e.stopPropagation()}
-          onClick={() => store.simulateFirstVisit()}
-          title="Simulate first-time visitor prompt"
-          className="rt2-focus cursor-pointer rounded bg-white px-2 py-0.5 font-mono text-[11px] font-extrabold tracking-normal text-fuchsia-900 transition hover:bg-fuchsia-100"
-        >
-          1st visit
-        </button>
+        <>
+          <button
+            type="button"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={() => store.simulateFirstVisit()}
+            title="Simulate first-time visitor prompt"
+            className="rt2-focus cursor-pointer rounded bg-white px-2 py-0.5 font-mono text-[11px] font-extrabold tracking-normal text-fuchsia-900 transition hover:bg-fuchsia-100"
+          >
+            1st visit
+          </button>
+          <button
+            type="button"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={() => store.simulateFirstUnlinkedLogin()}
+            title="Simulate first-time unlinked user login prompt"
+            className="rt2-focus cursor-pointer rounded bg-white px-2 py-0.5 font-mono text-[11px] font-extrabold tracking-normal text-fuchsia-900 transition hover:bg-fuchsia-100"
+          >
+            1st login
+          </button>
+        </>
       )}
     </div>
   )

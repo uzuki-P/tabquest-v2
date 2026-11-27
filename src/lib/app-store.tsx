@@ -189,8 +189,10 @@ interface AppStoreValue {
   drawerOpen: boolean
   setDrawerOpen: (open: boolean) => void
   identifyModalOpen: boolean
+  identifySimulated: boolean
   openIdentifyModal: () => void
   dismissIdentifyModal: () => void
+  simulateFirstUnlinkedLogin: () => void
   welcomeModalOpen: boolean
   welcomeSimulated: boolean
   openWelcomeModal: (options?: { simulated?: boolean }) => void
@@ -336,6 +338,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   const [systemDark, setSystemDark] = useState<boolean>(false)
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false)
   const [identifyModalOpen, setIdentifyModalOpen] = useState<boolean>(false)
+  const [identifySimulated, setIdentifySimulated] = useState<boolean>(false)
   const [welcomeModalOpen, setWelcomeModalOpen] = useState<boolean>(false)
   const [welcomeSimulated, setWelcomeSimulated] = useState<boolean>(false)
   const [latestStandingChange, setLatestStandingChange] =
@@ -536,6 +539,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   // Prompt unlinked signed-in users to identify themselves on first login
   useEffect(() => {
     if (authPending || !meLoaded || loading) return
+    if (identifySimulated) return
     if (!me.authenticated || !me.user || me.linkedPlayerId) {
       setIdentifyModalOpen(false)
       return
@@ -550,6 +554,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     me.authenticated,
     me.user?.id,
     me.linkedPlayerId,
+    identifySimulated,
   ])
 
   // Prompt first-time guest visitors to pick their name or sign in
@@ -644,14 +649,29 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   ])
 
   const openIdentifyModal = useCallback(() => {
+    setIdentifySimulated(false)
     setIdentifyModalOpen(true)
   }, [])
 
   const dismissIdentifyModal = useCallback(() => {
     setIdentifyModalOpen(false)
+    if (identifySimulated) {
+      setIdentifySimulated(false)
+      return
+    }
     if (me.user?.id) {
       markIdentifyDismissed(me.user.id)
     }
+  }, [identifySimulated, me.user?.id])
+
+  const simulateFirstUnlinkedLogin = useCallback(() => {
+    if (me.user?.id) {
+      clearIdentifyDismissed(me.user.id)
+    }
+    setWelcomeModalOpen(false)
+    setWelcomeSimulated(false)
+    setIdentifySimulated(true)
+    setIdentifyModalOpen(true)
   }, [me.user?.id])
 
   const openWelcomeModal = useCallback((options?: { simulated?: boolean }) => {
@@ -667,6 +687,8 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
 
   const simulateFirstVisit = useCallback(() => {
     clearWelcomeSeen()
+    setIdentifyModalOpen(false)
+    setIdentifySimulated(false)
     setWelcomeSimulated(true)
     setWelcomeModalOpen(true)
   }, [])
@@ -1376,8 +1398,10 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         drawerOpen,
         setDrawerOpen,
         identifyModalOpen,
+        identifySimulated,
         openIdentifyModal,
         dismissIdentifyModal,
+        simulateFirstUnlinkedLogin,
         welcomeModalOpen,
         welcomeSimulated,
         openWelcomeModal,

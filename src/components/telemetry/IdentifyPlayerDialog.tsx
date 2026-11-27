@@ -43,8 +43,11 @@ export function IdentifyPlayerDialog() {
     me,
     players,
     identifyModalOpen,
+    identifySimulated,
     dismissIdentifyModal,
     linkMyPlayer,
+    setActivePlayerId,
+    pushToast,
   } = useAppStore()
 
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -52,8 +55,12 @@ export function IdentifyPlayerDialog() {
   const [submitting, setSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
+  const accountEmail =
+    me.user?.email ?? (identifySimulated ? "dev.user@example.com" : "")
+  const accountName =
+    me.user?.name ?? (identifySimulated ? "Dev User" : undefined)
+
   const unlinkedPlayers = useMemo(() => {
-    const accountName = me.user?.name
     return players
       .filter((p) => p.archivedAt === null && p.userId === null)
       .sort((a, b) => {
@@ -64,7 +71,7 @@ export function IdentifyPlayerDialog() {
         if (unpaidDiff !== 0) return unpaidDiff
         return a.name.localeCompare(b.name)
       })
-  }, [players, me.user?.name])
+  }, [players, accountName])
 
   const filteredPlayers = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -88,12 +95,23 @@ export function IdentifyPlayerDialog() {
     }
   }, [identifyModalOpen])
 
-  if (!me.authenticated || me.linkedPlayerId) {
+  if (
+    !identifyModalOpen ||
+    (!identifySimulated && (!me.authenticated || me.linkedPlayerId))
+  ) {
     return null
   }
 
   const handleConfirm = async () => {
     if (!selectedPlayer || submitting) return
+    if (identifySimulated) {
+      setActivePlayerId(selectedPlayer.id)
+      dismissIdentifyModal()
+      pushToast(
+        `Dev preview: linked to ${selectedPlayer.name} (no changes saved).`
+      )
+      return
+    }
     setSubmitting(true)
     setErrorMessage(null)
     try {
@@ -118,13 +136,20 @@ export function IdentifyPlayerDialog() {
       <DialogContent className="max-h-[92dvh] gap-4 overflow-y-auto p-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:max-w-lg">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <DialogTitle className="rt2-display text-2xl font-extrabold sm:text-3xl">
-              Who are you?
-            </DialogTitle>
+            <div className="flex flex-wrap items-center gap-2">
+              <DialogTitle className="rt2-display text-2xl font-extrabold sm:text-3xl">
+                Who are you?
+              </DialogTitle>
+              {identifySimulated && (
+                <span className="rounded bg-[var(--rt-amber-soft)] px-2 py-0.5 font-arcade-mono text-[11px] font-bold text-[var(--rt-amber-ink)] uppercase">
+                  Dev preview
+                </span>
+              )}
+            </div>
             <DialogDescription className="mt-1 text-[14px] text-[var(--rt-muted)]">
               Signed in as{" "}
               <span className="font-arcade-mono font-semibold text-[var(--rt-ink)]">
-                {me.user?.email}
+                {accountEmail}
               </span>
               . Pick your player profile so you can report transfers and edit
               your profile without waiting for an admin.
@@ -184,7 +209,7 @@ export function IdentifyPlayerDialog() {
             {filteredPlayers.map((p) => {
               const selected = p.id === selectedId
               const owed = getPlayerUnpaidTotal(p)
-              const isMatch = matchesAccountName(p.name, me.user?.name)
+              const isMatch = matchesAccountName(p.name, accountName)
               return (
                 <button
                   key={p.id}

@@ -124,19 +124,22 @@ function HomePage() {
               Back to me
             </button>
 
-            <button
-              type="button"
-              onClick={() => setExpandedRoster((v) => !v)}
-              aria-pressed={expandedRoster}
-              className="rt2-focus inline-flex min-h-[30px] cursor-pointer items-center gap-1.5 rounded border border-transparent px-2 font-arcade-mono text-[12px] font-bold text-[var(--rt-muted)] transition-colors hover:border-[var(--rt-ui-border)] hover:bg-[var(--rt-surface-alt)] hover:text-[var(--rt-accent-ink)]"
-            >
-              <UsersThree size={15} weight="bold" />
-              <span>
-                {expandedRoster
-                  ? "Compact rail"
-                  : `Show all names (${sortedPlayers.length})`}
-              </span>
-            </button>
+            {clearPlayers.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setExpandedRoster((v) => !v)}
+                aria-pressed={expandedRoster}
+                title={
+                  expandedRoster
+                    ? "Show avatars only for settled players"
+                    : "Show names for all settled players"
+                }
+                className="rt2-focus inline-flex min-h-[30px] cursor-pointer items-center gap-1.5 rounded border border-transparent px-2 font-arcade-mono text-[12px] font-bold text-[var(--rt-muted)] transition-colors hover:border-[var(--rt-ui-border)] hover:bg-[var(--rt-surface-alt)] hover:text-[var(--rt-accent-ink)]"
+              >
+                <UsersThree size={15} weight="bold" />
+                <span>{expandedRoster ? "Hide names" : "Show names"}</span>
+              </button>
+            )}
 
             {you && (
               <>
